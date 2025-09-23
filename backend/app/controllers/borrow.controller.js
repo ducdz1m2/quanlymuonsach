@@ -33,7 +33,7 @@ exports.findOne = async (req, res, next) => {
   try {
     const borrowService = new BorrowService(MongoDB.client);
     const document = await borrowService.findById(req.params.id);
-    if (!document) {
+    if (document === null) {
       return next(new ApiError(404, "Không tìm thấy phiếu mượn."));
     }
     return res.send(document);
@@ -55,7 +55,7 @@ exports.update = async (req, res, next) => {
   try {
     const borrowService = new BorrowService(MongoDB.client);
     const document = await borrowService.update(req.params.id, req.body);
-    if (!document) {
+    if (document === null) {
       return next(new ApiError(404, "Không tìm thấy phiếu mượn."));
     }
     return res.send({ message: "Cập nhật phiếu mượn thành công." });
@@ -74,7 +74,7 @@ exports.delete = async (req, res, next) => {
     const borrowService = new BorrowService(MongoDB.client);
     const document = await borrowService.delete(req.params.id);
 
-    if (!document) {
+    if (document === null) {
       return next(new ApiError(404, "Không tìm thấy phiếu mượn."));
     }
 
@@ -98,17 +98,19 @@ exports.deleteAll = async (_req, res, next) => {
     return next(new ApiError(500, "Đã xảy ra lỗi khi xóa tất cả phiếu mượn."));
   }
 };
-exports.findAllDetail = async (_req, res, next) => {
+exports.findDetail = async (req, res, next) => {
   try {
     const borrowService = new BorrowService(MongoDB.client);
-    const documents = await borrowService.findAllWithDetail();
-    return res.send(documents);
+    const document = await borrowService.findDetailById(req.params.id);
+
+    if (document === null) {
+      return next(new ApiError(404, "Không tìm thấy phiếu mượn."));
+    }
+
+    return res.send(document);
   } catch (error) {
     return next(
-      new ApiError(
-        500,
-        "Đã xảy ra lỗi khi lấy danh sách phiếu mượn (chi tiết)."
-      )
+      new ApiError(500, `Lỗi khi lấy chi tiết phiếu mượn id=${req.params.id}`)
     );
   }
 };

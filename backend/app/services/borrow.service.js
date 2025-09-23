@@ -11,7 +11,8 @@ class BorrowService {
       docGiaId: payload.docGiaId ? new ObjectId(payload.docGiaId) : undefined,
       ngayMuon: payload.ngayMuon,
       ngayTra: payload.ngayTra,
-      daTra: payload.daTra ?? false,
+      trangThai: payload.trangThai || "dang_muon",
+      // mặc định khi tạo phiếu mượn sẽ là "đang mượn"
     };
     Object.keys(borrow).forEach(
       (key) => borrow[key] === undefined && delete borrow[key]
@@ -59,8 +60,14 @@ class BorrowService {
     const result = await this.Borrow.deleteMany({});
     return result.deletedCount;
   }
-  async findAllWithDetail() {
+
+  async findDetailById(id) {
+    if (!ObjectId.isValid(id)) return null;
+
     const cursor = await this.Borrow.aggregate([
+      {
+        $match: { _id: new ObjectId(id) }, // chỉ lấy borrow theo id
+      },
       {
         $lookup: {
           from: "book",
@@ -71,7 +78,7 @@ class BorrowService {
       },
       {
         $lookup: {
-          from: "docgia",
+          from: "reader",
           localField: "docGiaId",
           foreignField: "_id",
           as: "docGiaInfo",
@@ -80,7 +87,9 @@ class BorrowService {
       { $unwind: "$bookInfo" },
       { $unwind: "$docGiaInfo" },
     ]);
-    return await cursor.toArray();
+
+    const results = await cursor.toArray();
+    return results[0] || null; // chỉ trả về 1 object
   }
 }
 

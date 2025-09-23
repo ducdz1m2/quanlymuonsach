@@ -2,7 +2,7 @@ const express = require("express");
 const borrows = require("../controllers/borrow.controller");
 
 const router = express.Router();
-router.get("/detail", borrows.findAllDetail);
+
 router
   .route("/")
   .post(borrows.create)
@@ -13,5 +13,5 @@ router
   .get(borrows.findOne)
   .put(borrows.update)
   .delete(borrows.delete);
-
+router.get("/detail/:id", borrows.findDetail);
 module.exports = router;
