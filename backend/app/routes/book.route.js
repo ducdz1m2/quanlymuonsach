@@ -1,15 +1,9 @@
-const express = require("express")
-const books = require("../controllers/book.controller")
+const express = require("express");
+const books = require("../controllers/book.controller");
 
 const router = express.Router();
 
-router.route("/")
-    .post(books.create)
-    .get(books.findAll)
-    .delete(books.deleteAll)
-router.route("/:id")
-    .get(books.findOne)
-    .post(books.update)
-    .delete(books.delete)
+router.route("/").post(books.create).get(books.findAll).delete(books.deleteAll);
+router.route("/:id").get(books.findOne).put(books.update).delete(books.delete);
 
 module.exports = router;
