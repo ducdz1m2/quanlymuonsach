@@ -72,7 +72,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import BookService from "@/services/book.service";
-import BookForm from "@/components/Book/BookForm.vue";
+import BookForm from "@/components/books/BookForm.vue";
 
 const books = ref([]);
 const searchQuery = ref("");
