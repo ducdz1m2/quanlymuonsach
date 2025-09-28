@@ -68,101 +68,125 @@
         </div>
     </div>
 </template>
-
-<script setup>
-import { ref, computed, watch, onMounted } from "vue";
+<script>
 import BookService from "@/services/book.service";
 import BookForm from "@/components/books/BookForm.vue";
 
-const books = ref([]);
-const searchQuery = ref("");
-const loading = ref(false);
+export default {
+    components: { BookForm },
 
-const showForm = ref(false);
-const editingBook = ref(null);
+    data() {
+        return {
+            books: [],
+            searchQuery: "",
+            loading: false,
 
-// === Phân trang ===
-const currentPage = ref(1);
-const itemsPerPage = 5;
+            showForm: false,
+            editingBook: null,
 
-const filteredBooks = computed(() => {
-    const q = searchQuery.value.trim().toLowerCase();
-    if (!q) return books.value;
-    return books.value.filter((b) => {
-        const name = b.tenSach ? b.tenSach.toLowerCase() : "";
-        const author = b.tacGia ? b.tacGia.toLowerCase() : "";
-        return name.includes(q) || author.includes(q);
-    });
-});
+            // phân trang
+            currentPage: 1,
+            itemsPerPage: 5,
+        };
+    },
 
-const totalPages = computed(() => Math.ceil(filteredBooks.value.length / itemsPerPage));
+    computed: {
+        filteredBooks() {
+            const q = this.searchQuery.trim().toLowerCase();
+            if (!q) return this.books;
+            return this.books.filter((b) => {
+                const name = b.tenSach ? b.tenSach.toLowerCase() : "";
+                const author = b.tacGia ? b.tacGia.toLowerCase() : "";
+                return name.includes(q) || author.includes(q);
+            });
+        },
 
-const paginatedBooks = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    return filteredBooks.value.slice(start, end);
-});
+        totalPages() {
+            return Math.ceil(this.filteredBooks.length / this.itemsPerPage);
+        },
 
-// search reset về trang 1
-watch(searchQuery, () => { currentPage.value = 1; });
+        paginatedBooks() {
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const end = start + this.itemsPerPage;
+            return this.filteredBooks.slice(start, end);
+        },
+    },
 
-function prevPage() { if (currentPage.value > 1) currentPage.value--; }
-function nextPage() { if (currentPage.value < totalPages.value) currentPage.value++; }
+    watch: {
+        searchQuery() {
+            this.currentPage = 1;
+        },
+    },
 
-// === API CRUD ===
-async function fetchBooks() {
-    loading.value = true;
-    try {
-        books.value = await BookService.getAll();
-    } catch (err) {
-        console.error("Lỗi tải sách:", err);
-        books.value = [];
-    } finally {
-        loading.value = false;
-    }
-}
+    methods: {
+        async fetchBooks() {
+            this.loading = true;
+            try {
+                this.books = await BookService.getAll();
+            } catch (err) {
+                console.error("Lỗi tải sách:", err);
+                this.books = [];
+            } finally {
+                this.loading = false;
+            }
+        },
 
-function openAddModal() {
-    editingBook.value = null;
-    showForm.value = true;
-}
-function openEditModal(book) {
-    editingBook.value = { ...book };
-    showForm.value = true;
-}
-function closeForm() {
-    showForm.value = false;
-    editingBook.value = null;
-}
+        prevPage() {
+            if (this.currentPage > 1) this.currentPage--;
+        },
 
-async function handleSave(book) {
-    try {
-        if (book._id) {
-            await BookService.update(book._id, book);
-        } else {
-            await BookService.create(book);
-        }
-        await fetchBooks();
-        closeForm();
-    } catch (err) {
-        console.error("Lỗi lưu sách:", err);
-    }
-}
+        nextPage() {
+            if (this.currentPage < this.totalPages) this.currentPage++;
+        },
 
-async function deleteBook(id) {
-    if (confirm("Bạn có chắc muốn xóa sách này không?")) {
-        try {
-            await BookService.delete(id);
-            await fetchBooks();
-        } catch (err) {
-            console.error("Lỗi khi xóa:", err);
-            alert("❌ Xóa thất bại!");
-        }
-    }
-}
+        openAddModal() {
+            this.editingBook = null;
+            this.showForm = true;
+        },
 
-onMounted(fetchBooks);
+        openEditModal(book) {
+            this.editingBook = { ...book };
+            this.showForm = true;
+        },
+
+        closeForm() {
+            this.showForm = false;
+            this.editingBook = null;
+        },
+
+        async handleSave(book) {
+            try {
+                if (book._id) {
+                    await BookService.update(book._id, book);
+                } else {
+                    await BookService.create(book);
+                }
+                await this.fetchBooks();
+                this.closeForm();
+            } catch (err) {
+                console.error("Lỗi lưu sách:", err);
+            }
+        },
+
+        async deleteBook(id) {
+            if (confirm("Bạn có chắc muốn xóa sách này không?")) {
+                try {
+                    await BookService.delete(id);
+                    await this.fetchBooks();
+                } catch (err) {
+                    console.error("Lỗi khi xóa:", err);
+                    alert("❌ Xóa thất bại!");
+                }
+            }
+        },
+    },
+
+    mounted() {
+        this.fetchBooks();
+    },
+};
 </script>
+
 
 <style scoped>
 .table img {

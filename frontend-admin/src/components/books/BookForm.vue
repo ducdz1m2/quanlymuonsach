@@ -43,27 +43,38 @@
         </form>
     </div>
 </template>
-
-<script setup>
-import { ref, watch } from "vue";
-
-const props = defineProps({
-    book: { type: Object, default: () => ({}) }
-});
-const emit = defineEmits(["save", "cancel"]);
-
-const localBook = ref({ ...props.book });
-
-// cập nhật khi book thay đổi
-watch(
-    () => props.book,
-    (newVal) => {
-        localBook.value = { ...newVal };
+<script>
+export default {
+    props: {
+        book: {
+            type: Object,
+            default: () => ({}),
+        },
     },
-    { deep: true }
-);
 
-function handleSubmit() {
-    emit("save", localBook.value);
-}
+    data() {
+        return {
+            localBook: { ...this.book },
+        };
+    },
+
+    watch: {
+
+        book: {
+            handler(newVal) {
+                this.localBook = { ...newVal };
+            },
+            deep: true,
+        },
+    },
+
+    methods: {
+        handleSubmit() {
+            this.$emit("save", this.localBook);
+        },
+        handleCancel() {
+            this.$emit("cancel");
+        },
+    },
+};
 </script>
