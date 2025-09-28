@@ -10,7 +10,7 @@ class StaffService {
     const staff = {
       hoTenNV: payload.hoTenNV,
       password: payload.password
-        ? bcrypt.hashSync(payload.password, 10) // hash trước khi lưu
+        ? bcrypt.hashSync(payload.password, 10) // hash trước khi lưu, 10 rounds
         : undefined,
       chucVu: payload.chucVu,
       diaChi: payload.diaChi,
