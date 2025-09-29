@@ -9,13 +9,18 @@ class StaffService {
   extractStaffData(payload) {
     const staff = {
       hoTenNV: payload.hoTenNV,
+      email: payload.email,
       password: payload.password
         ? bcrypt.hashSync(payload.password, 10) // hash trước khi lưu, 10 rounds
         : undefined,
       chucVu: payload.chucVu,
       diaChi: payload.diaChi,
       soDienThoai: payload.soDienThoai,
+      phai: payload.phai || "", // giới tính, mặc định rỗng nếu không có
+      ngaySinh: payload.ngaySinh || "", // ngày sinh, mặc định rỗng nếu không có
+      anh: payload.anh || "/images/default-staff.png", // ảnh mặc định nếu không có
     };
+
     Object.keys(staff).forEach(
       (key) => staff[key] === undefined && delete staff[key]
     );

@@ -11,7 +11,7 @@ const menuItems = [
     { icon: 'fas fa-book', text: 'Quản lý sách', route: '/books' },
     // { icon: 'fas fa-users', text: 'Quản lý độc giả', route: '/users' },
     // { icon: 'fas fa-book-reader', text: 'Quản lý mượn sách', route: '/borrow' },
-    // { icon: 'fas fa-user-tie', text: 'Quản lý nhân sự', route: '/staff' },
+    { icon: 'fas fa-user-tie', text: 'Quản lý nhân sự', route: '/staffs' },
     // { icon: 'fas fa-question-circle', text: 'Trợ giúp', route: '/help' }
 ]
 

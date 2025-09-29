@@ -1,14 +1,13 @@
 import createApiClient from "./api.service";
 
-class BookService {
-  constructor(baseUrl = "/api/books") {
+class StaffServicce {
+  constructor(baseUrl = "/api/staffs") {
     this.api = createApiClient(baseUrl);
   }
   async getAll() {
     const res = await this.api.get("/");
     return res.data;
   }
-
   async create(data) {
     return await this.api.post("/", data).data;
   }
@@ -26,4 +25,4 @@ class BookService {
   }
 }
 
-export default new BookService();
+export default new StaffServicce();
