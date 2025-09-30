@@ -11,8 +11,8 @@ class BorrowService {
       docGiaId: payload.docGiaId ? new ObjectId(payload.docGiaId) : undefined,
       ngayMuon: payload.ngayMuon,
       ngayTra: payload.ngayTra,
-      trangThai: payload.trangThai || "dang_muon",
-      // mặc định khi tạo phiếu mượn sẽ là "đang mượn"
+      trangThai: payload.trangThai ?? "san_sang",
+      // mặc định "san_sang", nhưng nếu payload có thì giữ nguyên
     };
     Object.keys(borrow).forEach(
       (key) => borrow[key] === undefined && delete borrow[key]

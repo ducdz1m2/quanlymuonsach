@@ -26,15 +26,19 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Phái</label>
-                <input type="text" class="form-control" v-model="localStaff.phai">
+                <select v-model="localStaff.phai" class="form-control">
+                    <option value="nam">Nam</option>
+                    <option value="nu">Nữ</option>
+                    <option value="khong_ro">Không rõ</option>
+                </select>
             </div>
             <div class="mb-3">
                 <label class="form-label">Ngày sinh</label>
-                <input type="text" class="form-control" v-model="localStaff.ngaySinh">
+                <input type="date" class="form-control" v-model="localStaff.ngaySinh">
             </div>
             <div class="mb-3">
                 <label class="form-label">Ảnh đại diện</label>
-                <input type="text" class="form-control" v-model="localStaff.anh">
+                <UploadImage v-model="localStaff.anh" />
             </div>
 
             <div class="d-flex justify-content-end gap-2">
@@ -47,8 +51,11 @@
 </template>
 
 <script>
-
+import UploadImage from '../UploadImage.vue';
 export default {
+    components: {
+        UploadImage,
+    },
     props: {
         staff: {
             type: Object,

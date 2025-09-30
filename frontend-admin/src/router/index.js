@@ -5,6 +5,7 @@ import Book from "@/views/Book.vue";
 import Staff from "@/views/Staff.vue";
 import Publisher from "@/views/Publisher.vue";
 import Reader from "@/views/Reader.vue";
+import Borrow from "@/views/Borrow.vue";
 const routes = [
   {
     path: "/",
@@ -48,6 +49,16 @@ const routes = [
         path: "",
         name: "readers",
         component: Reader,
+      },
+    ],
+  },
+  {
+    path: "/borrows",
+    children: [
+      {
+        path: "",
+        name: "borrows",
+        component: Borrow,
       },
     ],
   },
