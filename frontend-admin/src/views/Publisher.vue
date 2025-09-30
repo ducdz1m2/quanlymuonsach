@@ -151,7 +151,6 @@ export default {
 
 
                 } else {
-                    console.log(1)
                     await publisherService.create(publisher);
                 }
 

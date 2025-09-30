@@ -4,6 +4,7 @@ import NotFound from "@/views/NotFound.vue";
 import Book from "@/views/Book.vue";
 import Staff from "@/views/Staff.vue";
 import Publisher from "@/views/Publisher.vue";
+import Reader from "@/views/Reader.vue";
 const routes = [
   {
     path: "/",
@@ -37,6 +38,16 @@ const routes = [
         path: "",
         name: "publishers",
         component: Publisher,
+      },
+    ],
+  },
+  {
+    path: "/readers",
+    children: [
+      {
+        path: "",
+        name: "readers",
+        component: Reader,
       },
     ],
   },

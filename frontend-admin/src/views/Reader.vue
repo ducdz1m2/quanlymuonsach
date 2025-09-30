@@ -1,0 +1,214 @@
+<template>
+    <div class="p-4">
+        <h1 class="mb-4">📚 Quản lý độc giả</h1>
+
+        <!-- Thanh công cụ -->
+        <div class="d-flex justify-content-between mb-3">
+            <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm độc giả..." v-model="searchQuery" />
+            <button class="btn btn-primary" @click="openAddModal">+ Thêm độc giả</button>
+        </div>
+
+        <!-- Bảng danh sách -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Họ lót</th>
+                        <th>Tên</th>
+                        <th>Ngày sinh</th>
+                        <th>Phái</th>
+                        <th>Địa chỉ</th>
+                        <th>Điện thoại</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="reader in paginatedReaders" :key="reader._id">
+                        <td class="text-start">{{ reader.hoLot }}</td>
+                        <td class="text-start">{{ reader.ten }}</td>
+                        <td>{{ reader.ngaySinh }}</td>
+                        <td>{{ reader.phai }}</td>
+                        <td class="text-start">{{ reader.diaChi }}</td>
+                        <td>{{ reader.dienThoai }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning me-2" @click="openEditModal(reader)">Sửa</button>
+                            <button class="btn btn-sm btn-danger" @click="deleteReader(reader._id)">Xóa</button>
+                        </td>
+                    </tr>
+                    <tr v-if="!loading && paginatedReaders.length === 0">
+                        <td colspan="7">Không có độc giả phù hợp</td>
+                    </tr>
+                    <tr v-if="loading">
+                        <td colspan="7">⏳ Đang tải dữ liệu...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang -->
+        <div class="d-flex justify-content-center mt-3 gap-2" v-if="totalPages > 1">
+            <button class="btn btn-outline-primary" :disabled="currentPage === 1" @click="prevPage">◀ Trước</button>
+            <span class="align-self-center">Trang {{ currentPage }} / {{ totalPages || 1 }}</span>
+            <button class="btn btn-outline-primary" :disabled="currentPage === totalPages" @click="nextPage">Sau
+                ▶</button>
+        </div>
+
+        <!-- Modal -->
+        <div v-if="showForm" class="modal-backdrop">
+            <div class="modal-content p-4">
+                <h5>{{ editingReader ? "✏️ Sửa độc giả" : "➕ Thêm độc giả" }}</h5>
+                <ReaderForm :reader="editingReader" @save="handleSave" @cancel="closeForm" />
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import ReaderForm from "@/components/readers/ReaderForm.vue";
+import readerService from "@/services/reader.service";
+
+export default {
+    components: { ReaderForm },
+
+    data() {
+        return {
+            readers: [],
+            searchQuery: "",
+            loading: false,
+
+            showForm: false,
+            editingReader: null,
+
+            currentPage: 1,
+            itemsPerPage: 5,
+        };
+    },
+
+    computed: {
+        filteredReaders() {
+            const q = this.searchQuery.trim().toLowerCase();
+            if (!q) return this.readers;
+
+            return this.readers.filter((r) => {
+                const hoLot = r.hoLot ? r.hoLot.toLowerCase() : "";
+                const ten = r.ten ? r.ten.toLowerCase() : "";
+                const diaChi = r.diaChi ? r.diaChi.toLowerCase() : "";
+                const dienThoai = r.dienThoai ? r.dienThoai.toLowerCase() : "";
+
+                return (
+                    hoLot.includes(q) ||
+                    ten.includes(q) ||
+                    diaChi.includes(q) ||
+                    dienThoai.includes(q)
+                );
+            });
+        },
+
+        totalPages() {
+            return Math.ceil(this.filteredReaders.length / this.itemsPerPage);
+        },
+
+        paginatedReaders() {
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const end = start + this.itemsPerPage;
+            return this.filteredReaders.slice(start, end);
+        },
+    },
+
+    methods: {
+        async fetchReaders() {
+            this.loading = true;
+            try {
+                this.readers = await readerService.getAll();
+            } catch (err) {
+                this.readers = [];
+                console.error("Lỗi tải độc giả:", err);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        prevPage() {
+            if (this.currentPage > 1) this.currentPage--;
+        },
+
+        nextPage() {
+            if (this.currentPage < this.totalPages) this.currentPage++;
+        },
+
+        openAddModal() {
+            this.editingReader = null;
+            this.showForm = true;
+        },
+
+        openEditModal(reader) {
+            this.editingReader = { ...reader };
+            this.showForm = true;
+        },
+
+        closeForm() {
+            this.showForm = false;
+            this.editingReader = null;
+        },
+
+        async handleSave(reader) {
+            try {
+                if (reader._id) {
+                    await readerService.update(reader._id, reader);
+                } else {
+                    await readerService.create(reader);
+                }
+            } catch (err) {
+                console.error("Lỗi lưu độc giả:", err);
+            } finally {
+                this.closeForm();
+                this.fetchReaders();
+            }
+        },
+
+        async deleteReader(id) {
+            try {
+                await readerService.delete(id);
+                await this.fetchReaders();
+            } catch (err) {
+                console.error("Lỗi xóa độc giả:", err);
+                alert("❌ Xóa thất bại!");
+            }
+        },
+    },
+
+    mounted() {
+        this.fetchReaders();
+    },
+};
+</script>
+
+<style scoped>
+.table img {
+    object-fit: cover;
+}
+
+.text-start {
+    text-align: left;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+</style>
