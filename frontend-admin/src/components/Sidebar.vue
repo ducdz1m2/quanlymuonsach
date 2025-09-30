@@ -9,10 +9,11 @@ const activeIndex = ref(0);
 const menuItems = [
     { icon: 'fas fa-home', text: 'Trang chủ', route: '/' },
     { icon: 'fas fa-book', text: 'Quản lý sách', route: '/books' },
-    // { icon: 'fas fa-users', text: 'Quản lý độc giả', route: '/users' },
-    // { icon: 'fas fa-book-reader', text: 'Quản lý mượn sách', route: '/borrow' },
+    { icon: 'fas fa-users', text: 'Quản lý độc giả', route: '/users' },
+    { icon: 'fas fa-book-reader', text: 'Quản lý mượn sách', route: '/borrow' },
     { icon: 'fas fa-user-tie', text: 'Quản lý nhân sự', route: '/staffs' },
-    // { icon: 'fas fa-question-circle', text: 'Trợ giúp', route: '/help' }
+    { icon: 'fas fa-building', text: 'Quản lý NXB', route: '/publishers' },
+    { icon: 'fas fa-question-circle', text: 'Trợ giúp', route: '/help' }
 ]
 
 

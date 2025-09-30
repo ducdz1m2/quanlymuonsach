@@ -3,6 +3,7 @@ import Dashboard from "@/views/Dashboard.vue";
 import NotFound from "@/views/NotFound.vue";
 import Book from "@/views/Book.vue";
 import Staff from "@/views/Staff.vue";
+import Publisher from "@/views/Publisher.vue";
 const routes = [
   {
     path: "/",
@@ -26,6 +27,16 @@ const routes = [
         path: "",
         name: "staffs",
         component: Staff,
+      },
+    ],
+  },
+  {
+    path: "/publishers",
+    children: [
+      {
+        path: "",
+        name: "publishers",
+        component: Publisher,
       },
     ],
   },

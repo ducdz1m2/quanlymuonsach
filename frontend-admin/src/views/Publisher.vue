@@ -1,11 +1,12 @@
 <template>
     <div class="p-4">
-        <h1 class="mb-4">👨‍💼 Quản lý nhân viên</h1>
+        <h1 class="mb-4">👨‍💼 Quản lý Nhà xuất bản</h1>
 
         <!-- Thanh công cụ -->
         <div class="d-flex justify-content-between mb-3">
-            <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm nhân viên..." v-model="searchQuery" />
-            <button class="btn btn-primary" @click="openAddModal">+ Thêm nhân viên</button>
+            <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm nhà xuất bản..."
+                v-model="searchQuery" />
+            <button class="btn btn-primary" @click="openAddModal">+ Thêm nhà xuất bản</button>
         </div>
 
         <!-- Bảng danh sách -->
@@ -13,37 +14,28 @@
             <table class="table table-bordered table-hover text-center align-middle">
                 <thead class="table-dark">
                     <tr>
-                        <th>Họ tên</th>
-                        <th>Chức vụ</th>
-                        <th>Email</th>
-                        <th>Số điện thoại</th>
+                        <th>Tên NXB</th>
                         <th>Địa chỉ</th>
-                        <th>Giới tính</th>
-                        <th>Ngày sinh</th>
                         <th>Ảnh</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="staff in paginatedStaffs" :key="staff._id">
-                        <td class="text-start">{{ staff.hoTenNV }}</td>
-                        <td class="text-start">{{ staff.chucVu }}</td>
-                        <td>{{ staff.email }}</td>
-                        <td>{{ staff.soDienThoai }}</td>
-                        <td class="text-start">{{ staff.diaChi }}</td>
-                        <td>{{ staff.phai }}</td>
-                        <td>{{ staff.ngaySinh }}</td>
+                    <tr v-for="publisher in paginatedPublishers" :key="publisher._id">
+                        <td class="text-start">{{ publisher.tenNXB }}</td>
+                        <td class="text-start">{{ publisher.diaChi }}</td>
+
                         <td>
-                            <img :src="staff.anh || '/images/default-staff.png'" width="60" height="80"
+                            <img :src="publisher.anh || '/images/default-publisher.png'" width="60" height="80"
                                 class="rounded shadow-sm" />
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-warning me-2" @click="openEditModal(staff)">Sửa</button>
-                            <button class="btn btn-sm btn-danger" @click="deleteStaff(staff._id)">Xóa</button>
+                            <button class="btn btn-sm btn-warning me-2" @click="openEditModal(publisher)">Sửa</button>
+                            <button class="btn btn-sm btn-danger" @click="deletePublisher(publisher._id)">Xóa</button>
                         </td>
                     </tr>
-                    <tr v-if="!loading && paginatedStaffs.length === 0">
-                        <td colspan="9">Không có nhân viên phù hợp</td>
+                    <tr v-if="!loading && paginatedPublishers.length === 0">
+                        <td colspan="9">Không có NXB phù hợp</td>
                     </tr>
                     <tr v-if="loading">
                         <td colspan="9">⏳ Đang tải dữ liệu...</td>
@@ -60,35 +52,34 @@
                 ▶</button>
         </div>
 
-        <!-- Modal -->
         <div v-if="showForm" class="modal-backdrop">
             <div class="modal-content p-4">
-                <h5>{{ editingStaff ? "✏️ Sửa nhân viên" : "➕ Thêm nhân viên" }}</h5>
-                <StaffForm :staff="editingStaff" @save="handleSave" @cancel="closeForm" />
+                <h5>{{ editingPublisher ? "✏️ Sửa NXB" : "➕ Thêm NXB" }}</h5>
+                <PublisherForm :publisher="editingPublisher" @save="handleSave" @cancel="closeForm" />
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import staffService from '@/services/staff.service';
-import StaffForm from '@/components/staffs/StaffForm.vue';
+import PublisherForm from '@/components/publishers/PublisherForm.vue';
+import publisherService from '@/services/publisher.service';
 export default {
 
     components: {
-        StaffForm
+        PublisherForm
     },
 
     data() {
 
         return {
 
-            staffs: [],
+            publishers: [],
             searchQuery: "",
             loading: false,
 
             showForm: false,
-            editingStaff: null,
+            editingPublisher: null,
 
             currentPage: 1,
             itemsPerPage: 5,
@@ -96,46 +87,39 @@ export default {
     },
 
     computed: {
-        filteredStaffs() {
+        filteredPublishers() {
             const q = this.searchQuery.trim().toLowerCase();
-            if (!q) return this.staffs;
+            if (!q) return this.publishers;
 
-            return this.staffs.filter(b => {
-                const name = b.hoTenNV ? b.hoTenNV.toLowerCase() : "";
-                const position = b.chucVu ? b.chucVu.toLowerCase() : "";
-                const email = b.email ? b.email.toLowerCase() : "";
-                const phone = b.soDienThoai ? b.soDienThoai.toLowerCase() : "";
+            return this.publishers.filter(b => {
+                const name = b.tenNXB ? b.tenNXB.toLowerCase() : "";
                 const address = b.diaChi ? b.diaChi.toLowerCase() : "";
 
                 return (
                     name.includes(q) ||
-                    position.includes(q) ||
-                    email.includes(q) ||
-                    phone.includes(q) ||
                     address.includes(q)
                 );
             });
         },
 
         totalPages() {
-            return Math.ceil(this.filteredStaffs.length / this.itemsPerPage);
+            return Math.ceil(this.filteredPublishers.length / this.itemsPerPage);
         },
-        paginatedStaffs() {
+        paginatedPublishers() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
             const end = start + this.itemsPerPage;
-            return this.filteredStaffs.slice(start, end);
+            return this.filteredPublishers.slice(start, end);
         },
     },
 
     methods: {
-        async fetchStaffs() {
-            // TODO: gọi API lấy danh sách nhân viên
+        async fetchPublishers() {
             this.loading = true;
             try {
-                this.staffs = await staffService.getAll();
+                this.publishers = await publisherService.getAll();
 
             } catch (err) {
-                this.staffs = []
+                this.publishers = []
             } finally {
                 this.loading = false;
             }
@@ -147,48 +131,50 @@ export default {
             if (this.currentPage < this.totalPages) this.currentPage++;
         },
         openAddModal() {
-            this.editingStaff = null;
+            this.editingPublisher = null;
             this.showForm = true;
         },
-        openEditModal(staff) {
-            this.editingStaff = { ...staff };
+        openEditModal(publisher) {
+            this.editingPublisher = { ...publisher };
             this.showForm = true;
         },
         closeForm() {
             this.showForm = false;
-            this.editingStaff = null;
+            this.editingPublisher = null;
         },
-        async handleSave(staff) {
-            // TODO: thêm/sửa nhân viên
+        async handleSave(publisher) {
             try {
-                if (staff._id) {
-                    await staffService.update(staff._id, staff);
+
+                if (publisher._id) {
+
+                    await publisherService.update(publisher._id, publisher);
+
 
                 } else {
-                    await staffService.create(staff);
+                    console.log(1)
+                    await publisherService.create(publisher);
                 }
 
             } catch (err) {
-                console.error("Lỗi lưu nhân viên:", err);
+                console.error("Lỗi lưu NXB:", err);
             } finally {
                 this.closeForm();
-                this.fetchStaffs();
+                this.fetchPublishers();
             }
         },
-        async deleteStaff(id) {
-            // TODO: xóa nhân viên
+        async deletePublisher(id) {
             try {
-                await staffService.delete(id);
-                await this.fetchStaffs();
+                await publisherService.delete(id);
+                await this.fetchPublishers();
             } catch (err) {
-                console.error("Lỗi xóa nhân viên:", err);
+                console.error("Lỗi xóa NXB:", err);
                 alert("❌ Xóa thất bại!");
             }
         },
     },
 
     mounted() {
-        this.fetchStaffs();
+        this.fetchPublishers();
     },
 };
 </script>

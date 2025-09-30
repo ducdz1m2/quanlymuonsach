@@ -165,6 +165,8 @@ export default {
                 this.closeForm();
             } catch (err) {
                 console.error("Lỗi lưu sách:", err);
+            } finally {
+                this.fetchBooks();
             }
         },
 

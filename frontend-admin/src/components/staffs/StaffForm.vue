@@ -38,7 +38,7 @@
             </div>
 
             <div class="d-flex justify-content-end gap-2">
-                <button class="btn btn-secondary" @click="$emit('cancel')">Hủy</button>
+                <button class="btn btn-secondary" @click="handleCancel">Hủy</button>
                 <button type="submit" class="btn btn-primary">Lưu</button>
 
             </div>
