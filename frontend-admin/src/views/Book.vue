@@ -15,6 +15,7 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Tên sách</th>
+                        <th>Thể loại</th>
                         <th>Tác giả</th>
                         <th>Số lượng</th>
                         <th>Năm xuất bản</th>
@@ -27,6 +28,7 @@
                 <tbody>
                     <tr v-for="book in paginatedBooks" :key="book._id">
                         <td class="text-start">{{ book.tenSach }}</td>
+                        <td class="text-start">{{ book.theLoai || "Chưa có" }}</td>
                         <td class="text-start">{{ book.tacGia || "Không rõ" }}</td>
                         <td>{{ book.soQuyen }}</td>
                         <td>{{ book.namXuatBan }}</td>
@@ -45,11 +47,12 @@
                             </button>
                         </td>
                     </tr>
+
                     <tr v-if="!loading && paginatedBooks.length === 0">
-                        <td colspan="8">Không có sách phù hợp</td>
+                        <td colspan="9">Không có sách phù hợp</td>
                     </tr>
                     <tr v-if="loading">
-                        <td colspan="8">⏳ Đang tải dữ liệu...</td>
+                        <td colspan="9">⏳ Đang tải dữ liệu...</td>
                     </tr>
                 </tbody>
             </table>

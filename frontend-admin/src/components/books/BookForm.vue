@@ -31,6 +31,18 @@
                     <span v-else>Số lượng phải lớn hơn hoặc bằng 0</span>
                 </div>
             </div>
+            <!-- Thể loại -->
+            <div class="mb-3">
+                <label class="form-label">Thể loại</label>
+                <select v-model="localBook.theLoai" class="form-select"
+                    :class="{ 'is-invalid': v$.localBook.theLoai.$error }">
+                    <option value="" disabled>-- Chọn thể loại --</option>
+                    <option v-for="genre in genres" :key="genre" :value="genre">{{ genre }}</option>
+                </select>
+                <div v-if="v$.localBook.theLoai.$error" class="text-danger">
+                    Vui lòng chọn thể loại
+                </div>
+            </div>
 
             <!-- Năm xuất bản -->
             <div class="mb-3">
@@ -104,8 +116,19 @@ export default {
                 donGia: null,
                 moTa: "",
                 anhBia: null,
+                theLoai: "",
                 ...this.book,
             },
+            genres: [
+                "Văn học",
+                "Khoa học",
+                "Kinh tế",
+                "Tâm lý",
+                "Lịch sử",
+                "Công nghệ",
+                "Thiếu nhi",
+                "Khác",
+            ],
             v$: null,
         };
     },
@@ -133,7 +156,9 @@ export default {
                     }),
                 },
                 donGia: { required, minValue: minValue(0) },
+                theLoai: { required },
             },
+
         };
     },
     methods: {

@@ -10,6 +10,7 @@ class BookService {
       tenSach: payload.tenSach,
       tacGia: payload.tacGia,
       donGia: payload.donGia,
+      theLoai: payload.theLoai,
       soQuyen: payload.soQuyen,
       namXuatBan: payload.namXuatBan,
       maNXB: payload.maNXB ? new ObjectId(payload.maNXB) : undefined,
