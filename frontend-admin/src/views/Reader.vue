@@ -238,23 +238,42 @@ export default {
         },
         async handleDelete(reader) {
             try {
-                await readerService.delete(reader._id);
+                const response = await readerService.delete(reader._id);
+
+                // Xóa thành công
                 await this.fetchReaders();
                 this.closeForm();
+
                 Swal.fire({
                     icon: "success",
-                    title: "Đã xóa!",
+                    title: "Đã xóa độc giả",
+                    text: response?.message || "Xóa độc giả thành công.",
                     timer: 1500,
                     showConfirmButton: false,
                     toast: true,
                     position: "top-end",
                 });
             } catch (err) {
-                console.error(err);
-                Swal.fire("❌ Lỗi!", "Không thể xóa độc giả.", "error");
+                console.error("Lỗi khi xóa độc giả:", err);
+
+                // Xử lý lỗi từ backend
+                const errorMessage =
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Đã xảy ra lỗi khi xóa độc giả. Vui lòng thử lại.";
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Lỗi",
+                    text: errorMessage,
+                    toast: true,
+                    position: "top-end",
+                });
+            } finally {
+                await this.fetchReaders(); // Luôn làm mới danh sách
             }
-        }
-        ,
+        },
+
         async confirmDelete(reader) {
             const result = await Swal.fire({
                 title: "Bạn có chắc muốn xóa?",
@@ -267,23 +286,9 @@ export default {
                 cancelButtonColor: "#3085d6",
             });
 
-            if (result.isConfirmed) {
-                try {
-                    await readerService.delete(reader._id);
-                    await this.fetchReaders();
-                    await Swal.fire({
-                        icon: "success",
-                        title: "Đã xóa!",
-                        showConfirmButton: false,
-                        timer: 1500,
-                        toast: true,
-                        position: "top-end",
-                    });
-                } catch (err) {
-                    console.error("Lỗi xóa độc giả:", err);
-                    await Swal.fire("❌ Xóa thất bại!", "", "error");
-                }
-            }
+            if (!result.isConfirmed) return;
+
+            await this.handleDelete(reader);
         },
     },
 

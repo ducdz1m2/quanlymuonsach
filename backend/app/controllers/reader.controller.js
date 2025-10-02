@@ -105,18 +105,40 @@ exports.update = async (req, res, next) => {
     );
   }
 };
-
 exports.delete = async (req, res, next) => {
   try {
-    const readerService = new ReaderService(MongoDB.client);
-    const document = await readerService.delete(req.params.id);
+    const { id } = req.params;
 
-    if (document === null) {
+    if (!ObjectId.isValid(id)) {
+      return next(new ApiError(400, "ID độc giả không hợp lệ."));
+    }
+
+    const readerService = new ReaderService(MongoDB.client);
+    const borrowService = new BorrowService(MongoDB.client);
+
+    // Tìm độc giả
+    const reader = await readerService.findById(id);
+    if (!reader) {
       return next(new ApiError(404, "Không tìm thấy độc giả."));
     }
 
+    // Kiểm tra xem độc giả có phiếu mượn đang mượn sách không
+    const activeBorrows = await borrowService.find({
+      docGiaId: new ObjectId(id),
+      trangThai: "Đang mượn", // hoặc trạng thái chưa trả
+    });
+
+    if (activeBorrows.length > 0) {
+      return next(
+        new ApiError(400, "Không thể xóa độc giả vì vẫn đang mượn sách.")
+      );
+    }
+
+    // Nếu không có phiếu mượn đang mượn, xóa độc giả
+    await readerService.delete(id);
     return res.send({ message: "Xóa độc giả thành công." });
   } catch (error) {
+    console.error("Lỗi xóa độc giả:", error);
     return next(
       new ApiError(500, `Không thể xóa độc giả với id=${req.params.id}.`)
     );
