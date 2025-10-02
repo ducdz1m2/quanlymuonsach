@@ -1,6 +1,14 @@
 <template>
     <div>
         <form @submit.prevent="handleSubmit" novalidate>
+            <div class="mb-3">
+                <label class="form-label">Mã sách</label>
+                <input type="text" v-model="localBook.maSach" class="form-control"
+                    :class="{ 'is-invalid': v$.localBook.maSach.$error }" />
+                <div v-if="v$.localBook.maSach.$error" class="text-danger">
+                    Vui lòng nhập mã sách
+                </div>
+            </div>
             <!-- Tên sách -->
             <div class="mb-3">
                 <label class="form-label">Tên sách</label>
@@ -122,6 +130,7 @@ export default {
     data() {
         const currentYear = new Date().getFullYear();
         const localBook = reactive({
+            maSach: "",
             tenSach: "",
             tacGia: "",
             soQuyen: null,
@@ -150,6 +159,7 @@ export default {
             v$: useVuelidate(
                 {
                     localBook: {
+                        maSach: { required },
                         tenSach: { required },
                         tacGia: { required },
                         soQuyen: { required, minValue: minValue(0) },

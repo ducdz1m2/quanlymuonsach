@@ -1,6 +1,12 @@
 <template>
     <div>
         <form @submit.prevent="handleSubmit" novalidate>
+            <!-- Mã mượn (readonly) -->
+            <div class="mb-3">
+                <label class="form-label">Mã mượn</label>
+                <input type="text" class="form-control" v-model="localBorrow.maMuon" readonly />
+            </div>
+
             <!-- Sách -->
             <div class="mb-3">
                 <label class="form-label">Sách</label>
@@ -57,20 +63,13 @@
                 <select v-model="localBorrow.trangThai" class="form-control"
                     :class="{ 'is-invalid': v$.localBorrow.trangThai.$error }">
                     <option disabled value="">-- Chọn trạng thái --</option>
-
-                    <!-- Trạng thái hiện tại (disabled) -->
                     <option :value="currentStatus" disabled>{{ currentStatus }}</option>
-
-                    <!-- Trạng thái tiếp theo -->
-                    <option v-for="status in nextStatus" :key="status" :value="status">
-                        {{ status }}
-                    </option>
+                    <option v-for="status in nextStatus" :key="status" :value="status">{{ status }}</option>
                 </select>
                 <div v-if="v$.localBorrow.trangThai.$error" class="text-danger">
                     {{ v$.localBorrow.trangThai.$errors[0].$message }}
                 </div>
             </div>
-
 
             <!-- Buttons -->
             <div class="d-flex justify-content-end gap-2">
@@ -96,9 +95,9 @@ export default {
     props: { borrow: { type: Object, default: () => ({}) } },
     setup() { return { v$: useVuelidate() }; },
     data() {
-        const initialBorrow = this.borrow || {}; // tránh null
+        const initialBorrow = this.borrow || {};
         return {
-            localBorrow: { bookId: "", docGiaId: "", ngayMuon: "", ngayTra: "", trangThai: "", ...initialBorrow },
+            localBorrow: { bookId: "", docGiaId: "", ngayMuon: "", ngayTra: "", trangThai: "", maMuon: "", ...initialBorrow },
             currentStatus: initialBorrow.trangThai || "Chờ duyệt",
             books: [],
             readers: [],
@@ -113,18 +112,16 @@ export default {
         }
     },
     validations() {
-        const notInFuture = (value) => {
+        const notInFuture = value => {
             if (!value) return true;
             const today = new Date(); today.setHours(0, 0, 0, 0);
             const valDate = new Date(value); valDate.setHours(0, 0, 0, 0);
             return valDate <= today;
         };
-        const afterNgayMuon = (getNgayMuon) => (value) => {
+        const afterNgayMuon = getNgayMuon => value => {
             const ngayMuon = getNgayMuon();
             if (!value || !ngayMuon) return true;
-            const d1 = new Date(ngayMuon); d1.setHours(0, 0, 0, 0);
-            const d2 = new Date(value); d2.setHours(0, 0, 0, 0);
-            return d2 > d1;
+            return new Date(value) > new Date(ngayMuon);
         };
         const availableStock = (bookId, trangThai) => {
             if (!bookId) return true;
@@ -137,7 +134,7 @@ export default {
             localBorrow: {
                 bookId: {
                     required: helpers.withMessage("Vui lòng chọn sách", required),
-                    availableStock: helpers.withMessage("Sách đã hết", (value) => availableStock(value, this.localBorrow.trangThai))
+                    availableStock: helpers.withMessage("Sách đã hết", (v) => availableStock(v, this.localBorrow.trangThai))
                 },
                 docGiaId: { required: helpers.withMessage("Vui lòng chọn độc giả", required) },
                 ngayMuon: { required: helpers.withMessage("Vui lòng chọn ngày mượn", required), notInFuture: helpers.withMessage("Ngày mượn không được lớn hơn hôm nay", notInFuture) },
@@ -150,29 +147,16 @@ export default {
         nextStatus() {
             const order = ["Chờ duyệt", "Đang mượn", "Đã trả"];
             const idx = order.indexOf(this.currentStatus);
-            // Trạng thái tiếp theo, nếu có
             return idx >= 0 && idx < order.length - 1 ? [order[idx + 1]] : [];
-        },
-        allowedStatuses() {
-            const order = ["Chờ duyệt", "Đang mượn", "Đã trả"];
-            if (!this.localBorrow._id) return ["Chờ duyệt"];
-            const idx = order.indexOf(this.currentStatus);
-            return [this.currentStatus, order[idx + 1]].filter(Boolean);
         }
     },
     methods: {
-        handleSubmit() {
+        async handleSubmit() {
             this.v$.$touch();
-            if (this.v$.$invalid) {
-                this.$nextTick(() => {
-                    const firstErrorField = this.$el.querySelector("input.is-invalid, select.is-invalid, textarea.is-invalid");
-                    if (firstErrorField) firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
-                });
-                return;
-            }
+            if (this.v$.$invalid) return;
 
             this.$emit("save", this.localBorrow);
-            this.currentStatus = this.localBorrow.trangThai; // cập nhật trạng thái hiện tại
+            this.currentStatus = this.localBorrow.trangThai;
 
             Swal.fire({
                 icon: "success",
@@ -184,7 +168,6 @@ export default {
             });
         },
         async handleDelete() {
-            // Dùng currentStatus để kiểm tra trạng thái trước khi sửa
             if (this.currentStatus === "Đang mượn" || this.currentStatus === "Chờ duyệt") {
                 return Swal.fire({
                     icon: "warning",
@@ -192,24 +175,15 @@ export default {
                     text: "Phiếu mượn đang chờ duyệt hoặc đang mượn không thể xóa."
                 });
             }
-
             try {
                 await borrowService.delete(this.localBorrow._id);
-                Swal.fire({
-                    icon: "success",
-                    title: "Đã xóa!",
-                    timer: 1500,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: "top-end",
-                });
-                this.$emit("cancel"); // đóng form sau xóa
+                Swal.fire({ icon: "success", title: "Đã xóa!", timer: 1500, showConfirmButton: false, toast: true, position: "top-end" });
+                this.$emit("cancel");
             } catch (err) {
                 console.error(err);
                 Swal.fire("❌ Lỗi!", "Không thể xóa phiếu mượn.", "error");
             }
-        }
-        ,
+        },
         async handleCancel() {
             const result = await Swal.fire({
                 title: "Bạn có chắc muốn hủy?",
@@ -224,7 +198,16 @@ export default {
         async fetchBooks() { try { this.books = await bookService.getAll(); } catch (err) { console.error(err); } },
         async fetchReaders() { try { this.readers = await readerService.getAll(); } catch (err) { console.error(err); } },
     },
-    mounted() { this.fetchBooks(); this.fetchReaders(); },
+    async mounted() {
+        await this.fetchBooks();
+        await this.fetchReaders();
+
+        // Nếu tạo mới, sinh maMuon
+        if (!this.localBorrow.maMuon) {
+            const temp = await borrowService.generateMaMuon();
+            this.localBorrow.maMuon = temp;
+        }
+    }
 };
 </script>
 

@@ -14,6 +14,7 @@
             <table class="table table-bordered table-hover text-center align-middle">
                 <thead class="table-dark">
                     <tr>
+                        <th>Mã sách</th>
                         <th>Tên sách</th>
                         <th>Thể loại</th>
                         <th>Tác giả</th>
@@ -28,6 +29,8 @@
                 </thead>
                 <tbody>
                     <tr v-for="book in paginatedBooks" :key="book._id">
+
+                        <td class="text-start">{{ book.maSach }}</td>
                         <td class="text-start">{{ book.tenSach }}</td>
                         <td class="text-start">{{ book.theLoai || "Chưa có" }}</td>
                         <td class="text-start">{{ book.tacGia || "Không rõ" }}</td>
@@ -35,7 +38,7 @@
                         <td>{{ book.namXuatBan }}</td>
                         <td>{{ book.donGia != null ? book.donGia.toLocaleString() + ' ₫' : '-' }}</td>
                         <td class="text-start">{{ book.moTa || "Chưa có mô tả" }}</td>
-                        <td class="text-start">{{ book.tenNXB || "Không xác định" }}</td> <!-- Thêm cột NXB -->
+                        <td class="text-start">{{ book.tenNXB || "Không xác định" }}</td>
                         <td>
                             <img :src="book.anhBia || '/images/default-book.png'" width="60" height="80"
                                 class="rounded shadow-sm" />
@@ -109,7 +112,8 @@ export default {
             return this.books.filter((b) => {
                 const name = b.tenSach ? b.tenSach.toLowerCase() : "";
                 const author = b.tacGia ? b.tacGia.toLowerCase() : "";
-                return name.includes(q) || author.includes(q);
+                const code = b.maSach ? b.maSach.toLowerCase() : "";
+                return name.includes(q) || author.includes(q) || code.includes(q);
             });
         },
         totalPages() {

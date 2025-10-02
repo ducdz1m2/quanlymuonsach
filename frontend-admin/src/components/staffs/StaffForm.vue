@@ -1,6 +1,13 @@
 <template>
     <div>
         <form @submit.prevent="handleSubmit">
+            <!-- Mã nhân viên luôn hiển thị nhưng readonly -->
+            <div class="mb-3">
+                <label class="form-label">Mã nhân viên</label>
+                <input type="text" class="form-control" v-model="localStaff.maNV" readonly
+                    :placeholder="!localStaff.maNV ? '(Đang sinh tự động)' : ''" />
+            </div>
+
             <!-- Tên nhân viên -->
             <div class="mb-3">
                 <label class="form-label">Tên nhân viên</label>
@@ -23,9 +30,7 @@
                     <option value="Nhân viên kiểm duyệt">Nhân viên kiểm duyệt</option>
                     <option value="Quản lý nhân sự">Quản lý nhân sự</option>
                 </select>
-                <div v-if="v$.localStaff.chucVu.$error" class="text-danger">
-                    Vui lòng chọn chức vụ
-                </div>
+                <div v-if="v$.localStaff.chucVu.$error" class="text-danger">Vui lòng chọn chức vụ</div>
             </div>
 
             <!-- Email -->
@@ -70,9 +75,7 @@
                     <option value="Nữ">Nữ</option>
                     <option value="Không rõ">Không rõ</option>
                 </select>
-                <div v-if="v$.localStaff.phai.$error" class="text-danger">
-                    Vui lòng chọn phái
-                </div>
+                <div v-if="v$.localStaff.phai.$error" class="text-danger">Vui lòng chọn phái</div>
             </div>
 
             <!-- Ngày sinh -->
@@ -94,10 +97,10 @@
 
             <!-- Nút -->
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-danger" @click="handleDelete" v-if="localStaff._id">
+                <button type="button" class="btn btn-danger" @click="handleDelete(localStaff)" v-if="localStaff._id">
                     Xóa
                 </button>
-                <button class="btn btn-secondary" @click="handleCancel" type="button">Hủy</button>
+                <button type="button" class="btn btn-secondary" @click="handleCancel">Hủy</button>
                 <button type="submit" class="btn btn-primary">Lưu</button>
             </div>
         </form>
@@ -110,6 +113,7 @@ import { required, email, minLength, helpers } from "@vuelidate/validators";
 import UploadImage from "../UploadImage.vue";
 import Swal from "sweetalert2";
 import staffService from "@/services/staff.service";
+import { nextTick } from "vue";
 export default {
     components: { UploadImage },
     props: {
@@ -118,6 +122,7 @@ export default {
     data() {
         return {
             localStaff: {
+                maNV: "", // frontend sẽ hiển thị nhưng readonly
                 hoTenNV: "",
                 chucVu: "",
                 email: "",
@@ -136,49 +141,53 @@ export default {
     },
     validations: {
         localStaff: {
+            maNV: {}, // không bắt buộc, backend tự sinh
             hoTenNV: { required, minLength: minLength(3) },
             chucVu: { required },
             email: { required, email },
-            soDienThoai: {
-                required,
-                phone: helpers.regex(/^[0-9]{10,11}$/),
-            },
+            soDienThoai: { required, phone: helpers.regex(/^[0-9]{10,11}$/) },
             diaChi: { required, minLength: minLength(5) },
             phai: { required },
             ngaySinh: {
                 required,
-                adult: helpers.withMessage("Nhân viên phải từ 18 tuổi trở lên", (value) => {
-                    if (!value) return false;
-                    const dob = new Date(value);
-                    if (isNaN(dob)) return false;
-                    const today = new Date();
-                    const minDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-                    return dob <= minDate;
-                }),
+                adult: helpers.withMessage(
+                    "Nhân viên phải từ 18 tuổi trở lên",
+                    (value) => {
+                        if (!value) return false;
+                        const dob = new Date(value);
+                        if (isNaN(dob)) return false;
+                        const today = new Date();
+                        const minDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+                        return dob <= minDate;
+                    }
+                ),
             },
         },
     },
     methods: {
+
+
         async handleSubmit() {
             this.v$.$touch();
+
             if (this.v$.$invalid) {
-                this.$nextTick(() => {
-                    const firstErrorField = this.$el.querySelector(
-                        "input.is-invalid, select.is-invalid, textarea.is-invalid, .is-invalid input"
-                    );
-                    if (firstErrorField) {
-                        firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
-                        firstErrorField.focus();
-                    }
-                });
+                // Đợi Vue render xong class is-invalid
+                await nextTick();
+
+                const firstError = this.$el.querySelector(".is-invalid");
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+                    firstError.focus({ preventScroll: true }); // optional: focus luôn
+                }
                 return;
             }
 
             this.$emit("save", this.localStaff);
-
             await Swal.fire({
                 icon: "success",
-                title: this.localStaff._id ? "Cập nhật nhân viên thành công!" : "Thêm nhân viên thành công!",
+                title: this.localStaff._id
+                    ? "Cập nhật nhân viên thành công!"
+                    : "Thêm nhân viên thành công!",
                 showConfirmButton: false,
                 timer: 1500,
                 toast: true,
@@ -200,9 +209,8 @@ export default {
             if (!result.isConfirmed) return;
 
             try {
-                await staffService.delete(staff._id); // xóa backend
-                await this.fetchStaffs();            // fetch lại toàn bộ danh sách
-                this.closeForm();                    // đóng modal
+                await staffService.delete(staff._id);
+                this.$emit("deleted");
                 Swal.fire({
                     icon: "success",
                     title: "Đã xóa nhân viên!",

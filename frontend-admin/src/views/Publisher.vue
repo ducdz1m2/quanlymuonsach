@@ -12,6 +12,7 @@
             <table class="table table-bordered table-hover text-center align-middle">
                 <thead class="table-dark">
                     <tr>
+                        <th>Mã NXB</th>
                         <th>Tên NXB</th>
                         <th>Địa chỉ</th>
                         <th>Ảnh</th>
@@ -20,6 +21,7 @@
                 </thead>
                 <tbody>
                     <tr v-for="publisher in paginatedPublishers" :key="publisher._id">
+                        <td class="text-start">{{ publisher.maNXB }}</td>
                         <td class="text-start">{{ publisher.tenNXB }}</td>
                         <td class="text-start">{{ publisher.diaChi }}</td>
                         <td>
@@ -81,6 +83,7 @@ export default {
             const q = this.searchQuery.trim().toLowerCase();
             if (!q) return this.publishers;
             return this.publishers.filter(p =>
+                (p.maNXB?.toLowerCase().includes(q)) ||
                 (p.tenNXB?.toLowerCase().includes(q)) ||
                 (p.diaChi?.toLowerCase().includes(q))
             );

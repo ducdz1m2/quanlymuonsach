@@ -7,6 +7,7 @@ class BookService {
 
   extractBookData(payload) {
     const book = {
+      maSach: payload.maSach,
       tenSach: payload.tenSach,
       tacGia: payload.tacGia,
       donGia: payload.donGia,

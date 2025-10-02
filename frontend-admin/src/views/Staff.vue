@@ -13,6 +13,7 @@
             <table class="table table-bordered table-hover text-center align-middle">
                 <thead class="table-dark">
                     <tr>
+                        <th>Mã nhân viên</th>
                         <th>Họ tên</th>
                         <th>Chức vụ</th>
                         <th>Email</th>
@@ -26,6 +27,7 @@
                 </thead>
                 <tbody>
                     <tr v-for="staff in paginatedStaffs" :key="staff._id">
+                        <td class="text-start">{{ staff.maNV }}</td>
                         <td class="text-start">{{ staff.hoTenNV }}</td>
                         <td class="text-start">{{ staff.chucVu }}</td>
                         <td>{{ staff.email }}</td>
@@ -97,6 +99,7 @@ export default {
             if (!q) return this.staffs;
 
             return this.staffs.filter(b => {
+                const ma = b.maNV ? b.maNV.toLowerCase() : "";
                 const name = b.hoTenNV ? b.hoTenNV.toLowerCase() : "";
                 const position = b.chucVu ? b.chucVu.toLowerCase() : "";
                 const email = b.email ? b.email.toLowerCase() : "";
@@ -104,6 +107,7 @@ export default {
                 const address = b.diaChi ? b.diaChi.toLowerCase() : "";
 
                 return (
+                    ma.includes(q) ||
                     name.includes(q) ||
                     position.includes(q) ||
                     email.includes(q) ||
@@ -144,6 +148,7 @@ export default {
                 console.error("Lỗi lưu nhân viên:", err);
                 Swal.fire("❌ Lỗi!", "Không thể lưu nhân viên.", "error");
             } finally {
+                this.fetchStaffs();
                 this.closeForm();
             }
         },

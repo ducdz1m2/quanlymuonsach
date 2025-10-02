@@ -1,6 +1,13 @@
 <template>
     <div>
         <form @submit.prevent="handleSubmit" novalidate>
+            <!-- Mã nhà xuất bản -->
+            <div class="mb-3">
+                <label class="form-label">Mã nhà xuất bản</label>
+                <input type="text" class="form-control" v-model="localPublisher.maNXB" readonly
+                    :placeholder="!localPublisher.maNXB ? '(Đang sinh tự động)' : ''" />
+            </div>
+
             <!-- Tên NXB -->
             <div class="mb-3">
                 <label class="form-label">Tên nhà xuất bản</label>
@@ -44,6 +51,7 @@ import useVuelidate from "@vuelidate/core";
 import { required, minLength, helpers } from "@vuelidate/validators";
 import UploadImage from "../UploadImage.vue";
 import Swal from "sweetalert2";
+import { nextTick } from "vue";
 
 export default {
     components: { UploadImage },
@@ -51,12 +59,13 @@ export default {
     data() {
         return {
             localPublisher: {
+                maNXB: "",
                 tenNXB: "",
                 diaChi: "",
                 anh: null,
-                ...this.publisher
+                ...this.publisher,
             },
-            v$: null
+            v$: null,
         };
     },
     created() {
@@ -65,21 +74,31 @@ export default {
     validations() {
         return {
             localPublisher: {
+                maNXB: {}, // readonly, backend tự sinh
                 tenNXB: {
                     required: helpers.withMessage("Vui lòng nhập tên nhà xuất bản", required),
-                    minLength: helpers.withMessage("Tên phải có ít nhất 3 ký tự", minLength(3))
+                    minLength: helpers.withMessage("Tên phải có ít nhất 3 ký tự", minLength(3)),
                 },
                 diaChi: {
                     required: helpers.withMessage("Vui lòng nhập địa chỉ nhà xuất bản", required),
-                    minLength: helpers.withMessage("Địa chỉ phải có ít nhất 5 ký tự", minLength(5))
-                }
-            }
+                    minLength: helpers.withMessage("Địa chỉ phải có ít nhất 5 ký tự", minLength(5)),
+                },
+            },
         };
     },
     methods: {
         async handleSubmit() {
             this.v$.$touch();
-            if (this.v$.$invalid) return;
+
+            if (this.v$.$invalid) {
+                await nextTick();
+                const firstError = this.$el.querySelector(".is-invalid");
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+                    firstError.focus({ preventScroll: true });
+                }
+                return;
+            }
 
             this.$emit("save", this.localPublisher);
 
@@ -104,17 +123,18 @@ export default {
                 confirmButtonColor: "#d33",
                 cancelButtonColor: "#3085d6",
             });
-            if (result.isConfirmed) {
-                this.$emit("delete", this.localPublisher);
-                Swal.fire({
-                    icon: "success",
-                    title: "Đã xóa thành công!",
-                    timer: 1500,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: "top-end",
-                });
-            }
+
+            if (!result.isConfirmed) return;
+
+            this.$emit("delete", this.localPublisher);
+            Swal.fire({
+                icon: "success",
+                title: "Đã xóa thành công!",
+                timer: 1500,
+                showConfirmButton: false,
+                toast: true,
+                position: "top-end",
+            });
         },
         async handleCancel() {
             const result = await Swal.fire({
@@ -126,7 +146,7 @@ export default {
                 cancelButtonText: "Tiếp tục chỉnh sửa",
             });
             if (result.isConfirmed) this.$emit("cancel");
-        }
-    }
+        },
+    },
 };
 </script>

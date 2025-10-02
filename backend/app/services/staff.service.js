@@ -6,31 +6,59 @@ class StaffService {
     this.Staff = client.db().collection("staff");
   }
 
-  extractStaffData(payload) {
+  async extractStaffData(payload) {
+    let maNV = payload.maNV;
+
+    // Nếu không có mã nhân viên, tạo tự động
+    if (!maNV) {
+      maNV = await this.generateMaNV(); // hàm tự tăng
+    }
+
     const staff = {
+      maNV,
       hoTenNV: payload.hoTenNV,
       email: payload.email,
       password: payload.password
-        ? bcrypt.hashSync(payload.password, 10) // hash trước khi lưu, 10 rounds
+        ? bcrypt.hashSync(payload.password, 10)
         : undefined,
       chucVu: payload.chucVu,
       diaChi: payload.diaChi,
       soDienThoai: payload.soDienThoai,
-      phai: payload.phai || "", // giới tính, mặc định rỗng nếu không có
-      ngaySinh: payload.ngaySinh || "", // ngày sinh, mặc định rỗng nếu không có
-      anh: payload.anh || "/images/default-staff.png", // ảnh mặc định nếu không có
+      phai: payload.phai || "",
+      ngaySinh: payload.ngaySinh || "",
+      anh: payload.anh || "/images/default-staff.png",
     };
 
     Object.keys(staff).forEach(
       (key) => staff[key] === undefined && delete staff[key]
     );
+
     return staff;
   }
 
+  async generateMaNV() {
+    const lastStaff = await this.Staff.find({
+      maNV: { $regex: /^NV-\d{4}$/ },
+    }).toArray();
+
+    if (lastStaff.length === 0) return "NV-0001";
+
+    // Tìm số lớn nhất
+    let maxNumber = 0;
+    lastStaff.forEach((s) => {
+      const parts = s.maNV.split("-");
+      const num = parseInt(parts[1], 10);
+      if (!isNaN(num) && num > maxNumber) maxNumber = num;
+    });
+
+    const newNumber = maxNumber + 1;
+    return `NV-${newNumber.toString().padStart(4, "0")}`;
+  }
+
   async create(payload) {
-    const staff = this.extractStaffData(payload);
+    const staff = await this.extractStaffData(payload); // async
     const result = await this.Staff.findOneAndUpdate(
-      { hoTenNV: staff.hoTenNV, soDienThoai: staff.soDienThoai }, // tránh trùng
+      { hoTenNV: staff.hoTenNV, soDienThoai: staff.soDienThoai },
       { $set: staff },
       { returnDocument: "after", upsert: true }
     );

@@ -1,14 +1,11 @@
 <template>
     <nav class="py-3 ms-2 row text-center">
         <!-- Logo -->
-        <div class="col-3 d-flex align-items-center">
+        <div class="col-8 d-flex align-items-center">
             📚 Library Manager
 
         </div>
-        <div class="col-5">
-            <InputSearch v-model="keyword" @submit="test" />
 
-        </div>
         <div class="col-4 d-flex flex-row justify-content-end">
 
             <NotificationBell />
@@ -22,7 +19,6 @@
 
 <script>
 
-import InputSearch from './InputSearch.vue';
 import { ref } from 'vue';
 import NotificationBell from './NotificationBell.vue';
 import Avatar from './Avatar.vue';
@@ -30,19 +26,8 @@ import Avatar from './Avatar.vue';
 
 export default {
     components: {
-        InputSearch, NotificationBell, Avatar
+        NotificationBell, Avatar
     },
-    setup() {
-        const keyword = ref("")
-
-        const test = () => {
-            console.log("Search: OK")
-        }
-        return {
-            keyword,
-            test
-        }
-    }
 }
 </script>
 

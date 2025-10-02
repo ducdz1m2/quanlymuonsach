@@ -7,22 +7,46 @@ class BorrowService {
     this.bookService = new BookService(client);
   }
 
-  extractBorrowData(payload) {
+  async generateMaMuon() {
+    const borrows = await this.Borrow.find({
+      maMuon: { $regex: /^MUON-\d{4}$/ },
+    }).toArray();
+
+    if (borrows.length === 0) return "MUON-0001";
+
+    let maxNumber = 0;
+    borrows.forEach((b) => {
+      const parts = b.maMuon.split("-");
+      const num = parseInt(parts[1], 10);
+      if (!isNaN(num) && num > maxNumber) maxNumber = num;
+    });
+
+    const newNumber = maxNumber + 1;
+    return `MUON-${newNumber.toString().padStart(4, "0")}`;
+  }
+
+  async extractBorrowData(payload) {
+    let maMuon = payload.maMuon;
+    if (!maMuon) maMuon = await this.generateMaMuon();
+
     const borrow = {
+      maMuon,
       bookId: payload.bookId ? new ObjectId(payload.bookId) : undefined,
       docGiaId: payload.docGiaId ? new ObjectId(payload.docGiaId) : undefined,
       ngayMuon: payload.ngayMuon,
       ngayTra: payload.ngayTra,
       trangThai: payload.trangThai ?? "Chờ duyệt",
     };
+
     Object.keys(borrow).forEach(
       (key) => borrow[key] === undefined && delete borrow[key]
     );
+
     return borrow;
   }
 
   async create(payload) {
-    const borrow = this.extractBorrowData(payload);
+    const borrow = await this.extractBorrowData(payload);
 
     // Nếu tạo phiếu đã mượn trực tiếp, kiểm tra số lượng
     if (borrow.trangThai === "Đang mượn") {
@@ -32,7 +56,6 @@ class BorrowService {
       await this.bookService.update(book._id, { soQuyen: book.soQuyen - 1 });
     }
 
-    // Tạo phiếu mượn
     const result = await this.Borrow.insertOne(borrow);
     return result.insertedId ? { _id: result.insertedId, ...borrow } : null;
   }
@@ -53,14 +76,14 @@ class BorrowService {
     const borrow = await this.findById(id);
     if (!borrow) return null;
 
-    const update = this.extractBorrowData(payload);
+    const update = await this.extractBorrowData(payload);
     const book = await this.bookService.findById(borrow.bookId);
     if (!book) throw new Error("Không tìm thấy sách");
 
     const oldStatus = borrow.trangThai;
     const newStatus = update.trangThai;
 
-    // Chờ duyệt -> Đang mượn: trừ 1
+    // Chờ duyệt -> Đang mượn
     if (oldStatus === "Chờ duyệt" && newStatus === "Đang mượn") {
       if (book.soQuyen <= 0)
         throw new Error("Sách đã hết, không thể duyệt mượn");
@@ -74,7 +97,6 @@ class BorrowService {
       });
     }
 
-    // Cập nhật phiếu
     const result = await this.Borrow.findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: update },

@@ -14,6 +14,7 @@
             <table class="table table-bordered table-hover text-center align-middle">
                 <thead class="table-dark">
                     <tr>
+                        <th>Mã mượn</th>
                         <th>Tên sách</th>
                         <th>Độc giả</th>
                         <th>Ngày mượn</th>
@@ -25,6 +26,7 @@
                 <tbody>
                     <tr v-for="borrow in paginatedBorrows" :key="borrow._id" @click="openDetailModal(borrow)"
                         style="cursor: pointer;">
+                        <td class="text-start">{{ borrow.maMuon }}</td>
                         <td class="text-start">{{ borrow.bookInfo?.tenSach || borrow.bookId }}</td>
                         <td class="text-start">
                             {{ borrow.docGiaInfo ? borrow.docGiaInfo.hoLot + ' ' + borrow.docGiaInfo.ten :
@@ -80,6 +82,7 @@
                     <!-- Thông tin sách -->
                     <div class="detail-section">
                         <h6>📚 Thông tin sách</h6>
+
                         <p><b>Tên sách:</b> {{ selectedBorrow.bookInfo?.tenSach }}</p>
                         <p><b>Tác giả:</b> {{ selectedBorrow.bookInfo?.tacGia }}</p>
                         <p><b>Năm xuất bản:</b> {{ selectedBorrow.bookInfo?.namXuatBan }}</p>

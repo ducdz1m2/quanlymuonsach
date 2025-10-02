@@ -1,6 +1,13 @@
 <template>
     <div>
         <form @submit.prevent="handleSubmit">
+            <!-- Mã độc giả -->
+            <div class="mb-3">
+                <label class="form-label">Mã độc giả</label>
+                <input type="text" class="form-control" v-model="localReader.maDG" readonly
+                    :placeholder="!localReader.maDG ? '(Đang sinh tự động)' : ''" />
+            </div>
+
             <!-- Họ lót -->
             <div class="mb-3">
                 <label class="form-label">Họ lót</label>
@@ -44,9 +51,7 @@
                     <option value="Nữ">Nữ</option>
                     <option value="Không rõ">Không rõ</option>
                 </select>
-                <div v-if="v$.localReader.phai.$error" class="text-danger">
-                    Vui lòng chọn phái
-                </div>
+                <div v-if="v$.localReader.phai.$error" class="text-danger">Vui lòng chọn phái</div>
             </div>
 
             <!-- Địa chỉ -->
@@ -94,6 +99,7 @@ import useVuelidate from "@vuelidate/core";
 import { required, minLength, helpers } from "@vuelidate/validators";
 import UploadImage from "../UploadImage.vue";
 import Swal from "sweetalert2";
+import { nextTick } from "vue";
 
 export default {
     components: { UploadImage },
@@ -103,6 +109,7 @@ export default {
     data() {
         return {
             localReader: {
+                maDG: "",
                 hoLot: "",
                 ten: "",
                 ngaySinh: "",
@@ -120,40 +127,39 @@ export default {
     },
     validations: {
         localReader: {
+            maDG: {}, // readonly, backend tự sinh
             hoLot: { required, minLength: minLength(2) },
             ten: { required, minLength: minLength(2) },
             ngaySinh: {
                 required,
-                minAge12: helpers.withMessage("Độc giả phải từ 12 tuổi trở lên", (value) => {
-                    if (!value) return false;
-                    const dob = new Date(value);
-                    if (isNaN(dob)) return false;
-                    const today = new Date();
-                    const minDate = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate());
-                    return dob <= minDate && dob <= today;
-                }),
+                minAge12: helpers.withMessage(
+                    "Độc giả phải từ 12 tuổi trở lên và không vượt quá ngày hiện tại",
+                    (value) => {
+                        if (!value) return false;
+                        const dob = new Date(value);
+                        if (isNaN(dob)) return false;
+                        const today = new Date();
+                        const minDate = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate());
+                        return dob <= today && dob <= minDate;
+                    }
+                ),
             },
             phai: { required },
             diaChi: { required, minLength: minLength(5) },
-            dienThoai: {
-                required,
-                phone: helpers.regex(/^(0\d{9})$/),
-            },
+            dienThoai: { required, phone: helpers.regex(/^(0\d{9})$/) },
         },
     },
     methods: {
         async handleSubmit() {
             this.v$.$touch();
+
             if (this.v$.$invalid) {
-                this.$nextTick(() => {
-                    const firstErrorField = this.$el.querySelector(
-                        "input.is-invalid, select.is-invalid, textarea.is-invalid, .is-invalid input"
-                    );
-                    if (firstErrorField) {
-                        firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
-                        firstErrorField.focus();
-                    }
-                });
+                await nextTick();
+                const firstError = this.$el.querySelector(".is-invalid");
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+                    firstError.focus({ preventScroll: true });
+                }
                 return;
             }
 
@@ -161,7 +167,9 @@ export default {
 
             await Swal.fire({
                 icon: "success",
-                title: this.localReader._id ? "Cập nhật độc giả thành công!" : "Thêm độc giả thành công!",
+                title: this.localReader._id
+                    ? "Cập nhật độc giả thành công!"
+                    : "Thêm độc giả thành công!",
                 showConfirmButton: false,
                 timer: 1500,
                 toast: true,
@@ -170,9 +178,10 @@ export default {
         },
         async handleDelete() {
             if (!this.localReader._id) return;
+
             const result = await Swal.fire({
                 title: "Bạn chắc chắn muốn xóa?",
-                text: `Độc giả này sẽ bị xóa`,
+                text: `Độc giả: ${this.localReader.hoLot} ${this.localReader.ten}`,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Xóa",
@@ -180,17 +189,18 @@ export default {
                 confirmButtonColor: "#d33",
                 cancelButtonColor: "#3085d6",
             });
-            if (result.isConfirmed) {
-                this.$emit("delete", this.localReader);
-                Swal.fire({
-                    icon: "success",
-                    title: "Đã xóa thành công!",
-                    timer: 1500,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: "top-end",
-                });
-            }
+
+            if (!result.isConfirmed) return;
+
+            this.$emit("delete", this.localReader);
+            Swal.fire({
+                icon: "success",
+                title: "Đã xóa độc giả!",
+                timer: 1500,
+                showConfirmButton: false,
+                toast: true,
+                position: "top-end",
+            });
         },
         async handleCancel() {
             const result = await Swal.fire({

@@ -13,6 +13,7 @@
             <table class="table table-bordered table-hover text-center align-middle">
                 <thead class="table-dark">
                     <tr>
+                        <th>Mã độc giả</th>
                         <th>Họ lót</th>
                         <th>Tên</th>
                         <th>Ngày sinh</th>
@@ -29,6 +30,8 @@
                 </thead>
                 <tbody>
                     <tr v-for="reader in paginatedReaders" :key="reader._id">
+
+                        <td class="text-start">{{ reader.maDG }}</td>
                         <td class="text-start">{{ reader.hoLot }}</td>
                         <td class="text-start">{{ reader.ten }}</td>
                         <td>{{ reader.ngaySinh }}</td>
@@ -107,12 +110,15 @@ export default {
             if (!q) return this.readers;
 
             return this.readers.filter((r) => {
+
+                const maDG = r.maDG ? r.maDG.toLowerCase() : "";
                 const hoLot = r.hoLot ? r.hoLot.toLowerCase() : "";
                 const ten = r.ten ? r.ten.toLowerCase() : "";
                 const diaChi = r.diaChi ? r.diaChi.toLowerCase() : "";
                 const dienThoai = r.dienThoai ? r.dienThoai.toLowerCase() : "";
 
                 return (
+                    maDG.includes(q) ||
                     hoLot.includes(q) ||
                     ten.includes(q) ||
                     diaChi.includes(q) ||
