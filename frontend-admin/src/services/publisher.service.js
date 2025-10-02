@@ -22,7 +22,8 @@ class PublisherService {
     return await this.api.put(`${id}`, data).data;
   }
   async delete(id) {
-    return await this.api.delete(`/${id}`).data;
+    const response = await this.api.delete(`/${id}`);
+    return response.data;
   }
 }
 

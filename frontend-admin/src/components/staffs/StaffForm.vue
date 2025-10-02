@@ -20,9 +20,8 @@
                     <option disabled value="">-- Chọn chức vụ --</option>
                     <option value="Thủ thư">Thủ thư</option>
                     <option value="Admin">Admin</option>
-                    <option value="Nhân viên hỗ trợ">Nhân viên hỗ trợ</option>
                     <option value="Nhân viên kiểm duyệt">Nhân viên kiểm duyệt</option>
-                    <option value="Nhân viên IT">Nhân viên IT</option>
+                    <option value="Quản lý nhân sự">Quản lý nhân sự</option>
                 </select>
                 <div v-if="v$.localStaff.chucVu.$error" class="text-danger">
                     Vui lòng chọn chức vụ

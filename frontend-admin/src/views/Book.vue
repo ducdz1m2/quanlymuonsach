@@ -21,6 +21,7 @@
                         <th>Năm xuất bản</th>
                         <th>Đơn giá</th>
                         <th>Mô tả</th>
+                        <th>Nhà xuất bản</th>
                         <th>Ảnh bìa</th>
                         <th>Hành động</th>
                     </tr>
@@ -34,6 +35,7 @@
                         <td>{{ book.namXuatBan }}</td>
                         <td>{{ book.donGia != null ? book.donGia.toLocaleString() + ' ₫' : '-' }}</td>
                         <td class="text-start">{{ book.moTa || "Chưa có mô tả" }}</td>
+                        <td class="text-start">{{ book.tenNXB || "Không xác định" }}</td> <!-- Thêm cột NXB -->
                         <td>
                             <img :src="book.anhBia || '/images/default-book.png'" width="60" height="80"
                                 class="rounded shadow-sm" />
@@ -49,12 +51,13 @@
                     </tr>
 
                     <tr v-if="!loading && paginatedBooks.length === 0">
-                        <td colspan="9">Không có sách phù hợp</td>
+                        <td colspan="10">Không có sách phù hợp</td>
                     </tr>
                     <tr v-if="loading">
-                        <td colspan="9">⏳ Đang tải dữ liệu...</td>
+                        <td colspan="10">⏳ Đang tải dữ liệu...</td>
                     </tr>
                 </tbody>
+
             </table>
         </div>
 
@@ -207,7 +210,13 @@ export default {
                     });
                 } catch (err) {
                     console.error("Lỗi khi xóa:", err);
-                    Swal.fire("❌ Lỗi!", "Không thể xóa sách.", "error");
+
+                    // ✅ Thêm check lỗi từ backend
+                    if (err.response && err.response.data && err.response.data.message) {
+                        Swal.fire("❌ Không thể xóa!", err.response.data.message, "warning");
+                    } else {
+                        Swal.fire("❌ Lỗi!", "Không thể xóa sách.", "error");
+                    }
                 }
             }
         },
@@ -227,7 +236,12 @@ export default {
                 });
             } catch (err) {
                 console.error(err);
-                Swal.fire("❌ Lỗi!", "Không thể xóa sách.", "error");
+
+                if (err.response && err.response.data && err.response.data.message) {
+                    Swal.fire("❌ Không thể xóa!", err.response.data.message, "warning");
+                } else {
+                    Swal.fire("❌ Lỗi!", "Không thể xóa sách.", "error");
+                }
             }
         },
     },

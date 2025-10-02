@@ -113,22 +113,42 @@ export default {
         },
         async handleDelete(publisher) {
             try {
-                await publisherService.delete(publisher._id);
+                const response = await publisherService.delete(publisher._id);
+
+                // Xóa thành công
                 await this.fetchPublishers();
                 this.closeForm();
+
                 Swal.fire({
                     icon: "success",
-                    title: "Đã xóa!",
+                    title: "Đã xóa NXB",
+                    text: (response?.data?.message || response?.message || "Xóa nhà xuất bản thành công."),
                     timer: 1500,
                     showConfirmButton: false,
                     toast: true,
                     position: "top-end",
                 });
             } catch (err) {
-                console.error(err);
-                Swal.fire("❌ Lỗi!", "Không thể xóa nhà xuất bản.", "error");
+                console.error("Lỗi khi xóa NXB:", err);
+
+                // Xử lý lỗi từ backend
+                const errorMessage =
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Đã xảy ra lỗi khi xóa NXB. Vui lòng thử lại.";
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Lỗi",
+                    text: errorMessage,
+                    toast: true,
+                    position: "top-end",
+                });
+            } finally {
+                await this.fetchPublishers(); // Luôn làm mới danh sách
             }
         },
+
         async confirmDelete(publisher) {
             const result = await Swal.fire({
                 title: "Bạn có chắc muốn xóa?",
@@ -141,24 +161,17 @@ export default {
                 cancelButtonColor: "#3085d6",
             });
 
-            if (result.isConfirmed) {
-                try {
-                    await publisherService.delete(publisher._id);
-                    await this.fetchPublishers();
-                    Swal.fire({
-                        icon: "success",
-                        title: "Đã xóa!",
-                        timer: 1500,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: "top-end",
-                    });
-                } catch (err) {
-                    console.error("Lỗi xóa NXB:", err);
-                    Swal.fire("❌ Xóa thất bại!", "", "error");
-                }
-            }
-        },
+            if (!result.isConfirmed) return;
+
+            await this.handleDelete(publisher);
+        }
+
+
+
+
+
+
+
     },
     mounted() { this.fetchPublishers(); },
 };

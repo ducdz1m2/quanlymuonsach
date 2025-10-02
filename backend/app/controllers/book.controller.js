@@ -1,7 +1,7 @@
 const ApiError = require("../api-error");
 const BookService = require("../services/book.service");
 const MongoDB = require("../utils/mongodb.util");
-
+const PublisherService = require("../services/publisher.service");
 exports.create = async (req, res, next) => {
   if (!req.body?.tenSach) {
     return next(new ApiError(400, "Tên sách không thể để trống."));
@@ -14,31 +14,55 @@ exports.create = async (req, res, next) => {
     return next(new ApiError(500, "Đã xảy ra lỗi khi tạo sách."));
   }
 };
-
 exports.findAll = async (req, res, next) => {
-  let documents;
   try {
     const bookService = new BookService(MongoDB.client);
+    const publisherService = new PublisherService(MongoDB.client);
+
     const { tenSach } = req.query;
+    let books;
+
     if (tenSach) {
-      documents = await bookService.findByName(tenSach);
+      books = await bookService.findByName(tenSach);
     } else {
-      documents = await bookService.find({});
+      books = await bookService.find({});
     }
+
+    // Lấy tất cả NXB để map
+    const publishers = await publisherService.find({});
+
+    const booksWithPublisher = books.map((book) => {
+      const publisher = publishers.find(
+        (p) => p._id.toString() === book.maNXB?.toString()
+      );
+      return {
+        ...book,
+        tenNXB: publisher ? publisher.tenNXB : "Không xác định",
+      };
+    });
+
+    return res.send(booksWithPublisher);
   } catch (error) {
     return next(new ApiError(500, "Đã xảy ra lỗi khi tìm kiếm sách."));
   }
-  return res.send(documents);
 };
 
 exports.findOne = async (req, res, next) => {
   try {
     const bookService = new BookService(MongoDB.client);
-    const document = await bookService.findById(req.params.id);
-    if (document === null) {
-      return next(new ApiError(404, "Không tìm thấy sách."));
-    }
-    return res.send(document);
+    const publisherService = new PublisherService(MongoDB.client);
+
+    const book = await bookService.findById(req.params.id);
+    if (!book) return next(new ApiError(404, "Không tìm thấy sách."));
+
+    const publisher = await publisherService.findById(book.maNXB);
+
+    const bookWithPublisher = {
+      ...book,
+      tenNXB: publisher ? publisher.tenNXB : "Không xác định",
+    };
+
+    return res.send(bookWithPublisher);
   } catch (error) {
     return next(
       new ApiError(500, `Đã xảy ra lỗi khi tìm sách với id=${req.params.id}.`)

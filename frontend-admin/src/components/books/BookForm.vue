@@ -43,7 +43,19 @@
                     Vui lòng chọn thể loại
                 </div>
             </div>
-
+            <div class="mb-3">
+                <label class="form-label">Nhà xuất bản</label>
+                <select v-model="localBook.maNXB" class="form-select"
+                    :class="{ 'is-invalid': v$.localBook.maNXB.$error }">
+                    <option value="" disabled>-- Chọn nhà xuất bản --</option>
+                    <option v-for="publisher in publishers" :key="publisher._id" :value="publisher._id">
+                        {{ publisher.tenNXB }}
+                    </option>
+                </select>
+                <div v-if="v$.localBook.maNXB.$error" class="text-danger">
+                    Vui lòng chọn nhà xuất bản
+                </div>
+            </div>
             <!-- Năm xuất bản -->
             <div class="mb-3">
                 <label class="form-label">Năm xuất bản</label>
@@ -91,12 +103,13 @@
         </form>
     </div>
 </template>
-
 <script>
+import { reactive, toRefs } from "vue";
 import useVuelidate from "@vuelidate/core";
 import { required, minValue, helpers } from "@vuelidate/validators";
 import UploadImage from "../UploadImage.vue";
-import Swal from "sweetalert2"; // ✅ SweetAlert2
+import Swal from "sweetalert2";
+import PublisherService from "@/services/publisher.service";
 
 export default {
     components: { UploadImage },
@@ -107,18 +120,22 @@ export default {
         },
     },
     data() {
+        const currentYear = new Date().getFullYear();
+        const localBook = reactive({
+            tenSach: "",
+            tacGia: "",
+            soQuyen: null,
+            namXuatBan: null,
+            donGia: null,
+            moTa: "",
+            anhBia: null,
+            theLoai: "",
+            maNXB: "",
+            ...this.book,
+        });
+
         return {
-            localBook: {
-                tenSach: "",
-                tacGia: "",
-                soQuyen: null,
-                namXuatBan: null,
-                donGia: null,
-                moTa: "",
-                anhBia: null,
-                theLoai: "",
-                ...this.book,
-            },
+            localBook,
             genres: [
                 "Văn học",
                 "Khoa học",
@@ -129,40 +146,43 @@ export default {
                 "Thiếu nhi",
                 "Khác",
             ],
-            v$: null,
-        };
-    },
-    created() {
-        const rawValidations = this.$options.validations;
-        const rules =
-            typeof rawValidations === "function"
-                ? rawValidations.call(this)
-                : rawValidations;
-        this.v$ = useVuelidate(rules, this);
-    },
-    validations() {
-        const currentYear = new Date().getFullYear();
-        return {
-            localBook: {
-                tenSach: { required },
-                tacGia: { required },
-                soQuyen: { required, minValue: minValue(0) },
-                namXuatBan: {
-                    required,
-                    validYear: helpers.withMessage("Năm xuất bản không hợp lệ", (value) => {
-                        if (value === null || value === undefined) return false;
-                        const n = Number(value);
-                        return Number.isInteger(n) && n > 0 && n <= currentYear;
-                    }),
+            publishers: reactive([]),
+            v$: useVuelidate(
+                {
+                    localBook: {
+                        tenSach: { required },
+                        tacGia: { required },
+                        soQuyen: { required, minValue: minValue(0) },
+                        namXuatBan: {
+                            required,
+                            validYear: helpers.withMessage(
+                                "Năm xuất bản không hợp lệ",
+                                (value) => {
+                                    if (!value) return false;
+                                    const n = Number(value);
+                                    return Number.isInteger(n) && n > 0 && n <= currentYear;
+                                }
+                            ),
+                        },
+                        donGia: { required, minValue: minValue(0) },
+                        theLoai: { required },
+                        maNXB: { required },
+                    },
                 },
-                donGia: { required, minValue: minValue(0) },
-                theLoai: { required },
-            },
-
+                { localBook }
+            ),
         };
+    },
+    async created() {
+        try {
+            const data = await PublisherService.getAll();
+            this.publishers.push(...data);
+        } catch (err) {
+            console.error("Lỗi tải nhà xuất bản:", err);
+            this.publishers = [];
+        }
     },
     methods: {
-        // Lưu (thêm/sửa)
         handleSubmit() {
             this.v$.$touch();
             if (this.v$.$invalid) {
@@ -192,8 +212,6 @@ export default {
                 position: "top-end",
             });
         },
-
-        // Xóa
         async handleDelete() {
             if (!this.localBook._id) {
                 Swal.fire({
@@ -219,7 +237,6 @@ export default {
 
             if (result.isConfirmed) {
                 this.$emit("delete", this.localBook);
-
                 Swal.fire({
                     icon: "success",
                     title: "Đã xóa thành công!",
@@ -230,8 +247,6 @@ export default {
                 });
             }
         },
-
-        // Hủy
         async handleCancel() {
             const result = await Swal.fire({
                 title: "Bạn có chắc muốn hủy?",
@@ -249,6 +264,7 @@ export default {
     },
 };
 </script>
+
 
 <style scoped>
 .is-invalid {

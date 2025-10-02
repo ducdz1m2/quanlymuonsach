@@ -1,6 +1,8 @@
 const ApiError = require("../api-error");
 const PublisherService = require("../services/publisher.service");
 const MongoDB = require("../utils/mongodb.util");
+const BookService = require("../services/book.service"); // cần có
+const { ObjectId } = require("mongodb");
 
 exports.create = async (req, res, next) => {
   if (!req.body?.tenNXB) {
@@ -66,35 +68,56 @@ exports.update = async (req, res, next) => {
     );
   }
 };
-
 exports.delete = async (req, res, next) => {
   try {
-    const publisherService = new PublisherService(MongoDB.client);
-    const document = await publisherService.delete(req.params.id);
+    const { id } = req.params;
 
-    if (document === null) {
+    if (!ObjectId.isValid(id)) {
+      return next(new ApiError(400, "ID nhà xuất bản không hợp lệ."));
+    }
+
+    const publisherId = new ObjectId(id);
+    const publisherService = new PublisherService(MongoDB.client);
+    const bookService = new BookService(MongoDB.client);
+
+    const publisher = await publisherService.findById(publisherId);
+    if (!publisher) {
       return next(new ApiError(404, "Không tìm thấy nhà xuất bản."));
     }
 
+    const books = await bookService.find({ maNXB: publisherId });
+    if (books.length > 0) {
+      return next(
+        new ApiError(
+          400,
+          "Không thể xóa nhà xuất bản vì vẫn còn sách liên quan."
+        )
+      );
+    }
+
+    await publisherService.delete(publisherId);
     return res.send({ message: "Xóa nhà xuất bản thành công." });
   } catch (error) {
-    return next(
-      new ApiError(500, `Không thể xóa nhà xuất bản với id=${req.params.id}.`)
-    );
+    console.error("Lỗi xóa NXB:", error);
+    return next(new ApiError(500, "Đã xảy ra lỗi khi xóa nhà xuất bản."));
   }
 };
-
-exports.deleteAll = async (_req, res, next) => {
+exports.deleteAll = async (_req, res) => {
   try {
     const publisherService = new PublisherService(MongoDB.client);
-    const deletedCount = await publisherService.deleteAll();
+    const bookService = new BookService(MongoDB.client);
 
-    return res.send({
-      message: `${deletedCount} nhà xuất bản đã được xóa thành công.`,
-    });
+    const allPublishers = await publisherService.find({});
+
+    for (const publisher of allPublishers) {
+      const books = await bookService.find({ maNXB: publisher._id });
+      if (books.length > 0) continue; // Bỏ qua NXB còn sách
+      await publisherService.delete(publisher._id); // Xóa NXB
+    }
+
+    return res.sendStatus(200); // Xong tất cả
   } catch (error) {
-    return next(
-      new ApiError(500, "Đã xảy ra lỗi khi xóa tất cả nhà xuất bản.")
-    );
+    console.error("Lỗi xóa tất cả NXB:", error);
+    return res.sendStatus(200);
   }
 };
