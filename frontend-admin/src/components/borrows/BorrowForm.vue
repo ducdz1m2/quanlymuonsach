@@ -57,16 +57,20 @@
                 <select v-model="localBorrow.trangThai" class="form-control"
                     :class="{ 'is-invalid': v$.localBorrow.trangThai.$error }">
                     <option disabled value="">-- Chọn trạng thái --</option>
-                    <option value="Sẵn sàng">Sẵn sàng</option>
-                    <option value="Chờ duyệt">Chờ duyệt</option>
-                    <option value="Đã duyệt">Đã duyệt</option>
-                    <option value="Đang mượn">Đang mượn</option>
-                    <option value="Đã trả">Đã trả</option>
+
+                    <!-- Trạng thái hiện tại (disabled) -->
+                    <option :value="currentStatus" disabled>{{ currentStatus }}</option>
+
+                    <!-- Trạng thái tiếp theo -->
+                    <option v-for="status in nextStatus" :key="status" :value="status">
+                        {{ status }}
+                    </option>
                 </select>
                 <div v-if="v$.localBorrow.trangThai.$error" class="text-danger">
                     {{ v$.localBorrow.trangThai.$errors[0].$message }}
                 </div>
             </div>
+
 
             <!-- Buttons -->
             <div class="d-flex justify-content-end gap-2">
@@ -86,41 +90,55 @@ import { required, helpers } from "@vuelidate/validators";
 import Swal from "sweetalert2";
 import bookService from "@/services/book.service";
 import readerService from "@/services/reader.service";
+import borrowService from "@/services/borrow.service";
 
 export default {
     props: { borrow: { type: Object, default: () => ({}) } },
     setup() { return { v$: useVuelidate() }; },
     data() {
+        const initialBorrow = this.borrow || {}; // tránh null
         return {
-            localBorrow: { bookId: "", docGiaId: "", ngayMuon: "", ngayTra: "", trangThai: "", ...this.borrow },
+            localBorrow: { bookId: "", docGiaId: "", ngayMuon: "", ngayTra: "", trangThai: "", ...initialBorrow },
+            currentStatus: initialBorrow.trangThai || "Chờ duyệt",
             books: [],
             readers: [],
         };
     },
     watch: {
-        borrow: { handler(newVal) { this.localBorrow = { ...newVal }; }, deep: true }
+        borrow: {
+            handler(newVal) {
+                this.localBorrow = { ...newVal };
+                this.currentStatus = newVal.trangThai || "Chờ duyệt";
+            }, deep: true
+        }
     },
     validations() {
         const notInFuture = (value) => {
             if (!value) return true;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const valDate = new Date(value);
-            valDate.setHours(0, 0, 0, 0);
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const valDate = new Date(value); valDate.setHours(0, 0, 0, 0);
             return valDate <= today;
         };
         const afterNgayMuon = (getNgayMuon) => (value) => {
             const ngayMuon = getNgayMuon();
             if (!value || !ngayMuon) return true;
-            const d1 = new Date(ngayMuon);
-            const d2 = new Date(value);
-            d1.setHours(0, 0, 0, 0);
-            d2.setHours(0, 0, 0, 0);
+            const d1 = new Date(ngayMuon); d1.setHours(0, 0, 0, 0);
+            const d2 = new Date(value); d2.setHours(0, 0, 0, 0);
             return d2 > d1;
         };
+        const availableStock = (bookId, trangThai) => {
+            if (!bookId) return true;
+            if (trangThai === "Đã trả") return true;
+            const book = this.books.find(b => b._id === bookId);
+            return book ? book.soQuyen > 0 : false;
+        };
+
         return {
             localBorrow: {
-                bookId: { required: helpers.withMessage("Vui lòng chọn sách", required) },
+                bookId: {
+                    required: helpers.withMessage("Vui lòng chọn sách", required),
+                    availableStock: helpers.withMessage("Sách đã hết", (value) => availableStock(value, this.localBorrow.trangThai))
+                },
                 docGiaId: { required: helpers.withMessage("Vui lòng chọn độc giả", required) },
                 ngayMuon: { required: helpers.withMessage("Vui lòng chọn ngày mượn", required), notInFuture: helpers.withMessage("Ngày mượn không được lớn hơn hôm nay", notInFuture) },
                 ngayTra: { required: helpers.withMessage("Vui lòng chọn ngày trả", required), afterNgayMuon: helpers.withMessage("Ngày trả phải sau ngày mượn", afterNgayMuon(() => this.localBorrow.ngayMuon)) },
@@ -128,20 +146,34 @@ export default {
             }
         };
     },
+    computed: {
+        nextStatus() {
+            const order = ["Chờ duyệt", "Đang mượn", "Đã trả"];
+            const idx = order.indexOf(this.currentStatus);
+            // Trạng thái tiếp theo, nếu có
+            return idx >= 0 && idx < order.length - 1 ? [order[idx + 1]] : [];
+        },
+        allowedStatuses() {
+            const order = ["Chờ duyệt", "Đang mượn", "Đã trả"];
+            if (!this.localBorrow._id) return ["Chờ duyệt"];
+            const idx = order.indexOf(this.currentStatus);
+            return [this.currentStatus, order[idx + 1]].filter(Boolean);
+        }
+    },
     methods: {
         handleSubmit() {
             this.v$.$touch();
             if (this.v$.$invalid) {
                 this.$nextTick(() => {
                     const firstErrorField = this.$el.querySelector("input.is-invalid, select.is-invalid, textarea.is-invalid");
-                    if (firstErrorField) {
-                        firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
-                        firstErrorField.focus();
-                    }
+                    if (firstErrorField) firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
                 });
                 return;
             }
+
             this.$emit("save", this.localBorrow);
+            this.currentStatus = this.localBorrow.trangThai; // cập nhật trạng thái hiện tại
+
             Swal.fire({
                 icon: "success",
                 title: this.localBorrow._id ? "Cập nhật phiếu mượn thành công!" : "Thêm phiếu mượn thành công!",
@@ -152,29 +184,32 @@ export default {
             });
         },
         async handleDelete() {
-            if (!this.localBorrow._id) return;
-            const result = await Swal.fire({
-                title: "Bạn chắc chắn muốn xóa?",
-                text: `Phiếu mượn này sẽ bị xóa`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Xóa",
-                cancelButtonText: "Hủy",
-                confirmButtonColor: "#d33",
-                cancelButtonColor: "#3085d6",
-            });
-            if (result.isConfirmed) {
-                this.$emit("delete", this.localBorrow);
+            // Dùng currentStatus để kiểm tra trạng thái trước khi sửa
+            if (this.currentStatus === "Đang mượn" || this.currentStatus === "Chờ duyệt") {
+                return Swal.fire({
+                    icon: "warning",
+                    title: "⚠️ Không thể xóa",
+                    text: "Phiếu mượn đang chờ duyệt hoặc đang mượn không thể xóa."
+                });
+            }
+
+            try {
+                await borrowService.delete(this.localBorrow._id);
                 Swal.fire({
                     icon: "success",
-                    title: "Đã xóa thành công!",
+                    title: "Đã xóa!",
                     timer: 1500,
                     showConfirmButton: false,
                     toast: true,
                     position: "top-end",
                 });
+                this.$emit("cancel"); // đóng form sau xóa
+            } catch (err) {
+                console.error(err);
+                Swal.fire("❌ Lỗi!", "Không thể xóa phiếu mượn.", "error");
             }
-        },
+        }
+        ,
         async handleCancel() {
             const result = await Swal.fire({
                 title: "Bạn có chắc muốn hủy?",

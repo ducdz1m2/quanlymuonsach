@@ -110,7 +110,7 @@ import useVuelidate from "@vuelidate/core";
 import { required, email, minLength, helpers } from "@vuelidate/validators";
 import UploadImage from "../UploadImage.vue";
 import Swal from "sweetalert2";
-
+import staffService from "@/services/staff.service";
 export default {
     components: { UploadImage },
     props: {
@@ -186,11 +186,10 @@ export default {
                 position: "top-end",
             });
         },
-        async handleDelete() {
-            if (!this.localStaff._id) return;
+        async handleDelete(staff) {
             const result = await Swal.fire({
                 title: "Bạn chắc chắn muốn xóa?",
-                text: `Nhân viên này sẽ bị xóa`,
+                text: `Nhân viên: ${staff.hoTenNV}`,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Xóa",
@@ -198,16 +197,24 @@ export default {
                 confirmButtonColor: "#d33",
                 cancelButtonColor: "#3085d6",
             });
-            if (result.isConfirmed) {
-                this.$emit("delete", this.localStaff);
-                await Swal.fire({
+
+            if (!result.isConfirmed) return;
+
+            try {
+                await staffService.delete(staff._id); // xóa backend
+                await this.fetchStaffs();            // fetch lại toàn bộ danh sách
+                this.closeForm();                    // đóng modal
+                Swal.fire({
                     icon: "success",
-                    title: "Đã xóa thành công!",
+                    title: "Đã xóa nhân viên!",
                     timer: 1500,
                     showConfirmButton: false,
                     toast: true,
                     position: "top-end",
                 });
+            } catch (err) {
+                console.error(err);
+                Swal.fire("❌ Xóa thất bại!", "", "error");
             }
         },
         async handleCancel() {

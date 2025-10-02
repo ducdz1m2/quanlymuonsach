@@ -19,6 +19,10 @@
                         <th>Phái</th>
                         <th>Địa chỉ</th>
                         <th>Điện thoại</th>
+
+                        <th>Tiền đã thu (VND)</th>
+                        <th>Tiền sắp thu (VND)</th>
+
                         <th>Ảnh</th>
                         <th>Hành động</th>
                     </tr>
@@ -31,6 +35,13 @@
                         <td>{{ reader.phai }}</td>
                         <td class="text-start">{{ reader.diaChi }}</td>
                         <td>{{ reader.dienThoai }}</td>
+
+                        <td class="text-success">{{ reader.totalCollected != null ?
+                            reader.totalCollected.toLocaleString() + ' ₫' : '-' }}
+                        </td>
+                        <td class="text-warning">{{ reader.totalPending != null ? reader.totalPending.toLocaleString() +
+                            ' ₫' : '-' }}</td>
+
                         <td>
                             <img :src="reader.anh || '/images/default-reader.png'" width="60" height="80"
                                 class="rounded shadow-sm" />
@@ -126,6 +137,37 @@ export default {
             this.loading = true;
             try {
                 this.readers = await readerService.getAll();
+            } catch (err) {
+                this.readers = [];
+                console.error("Lỗi tải độc giả:", err);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async fetchReaders() {
+            this.loading = true;
+            try {
+                const readers = await readerService.getAll();
+
+                // Lấy tiền cho từng độc giả
+                const readersWithPayment = await Promise.all(
+                    readers.map(async (r) => {
+                        try {
+                            const payment = await readerService.getPayment(r._id);
+                            // payment = { totalCollected, totalPending }
+                            return {
+                                ...r,
+                                totalCollected: payment.totalCollected,
+                                totalPending: payment.totalPending
+                            };
+                        } catch (err) {
+                            console.error(`Lỗi lấy tiền cho độc giả ${r._id}:`, err);
+                            return { ...r, totalCollected: 0, totalPending: 0 };
+                        }
+                    })
+                );
+
+                this.readers = readersWithPayment;
             } catch (err) {
                 this.readers = [];
                 console.error("Lỗi tải độc giả:", err);

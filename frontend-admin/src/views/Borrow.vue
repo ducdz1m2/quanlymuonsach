@@ -39,7 +39,10 @@
                         </td>
                         <td>
                             <button class="btn btn-sm btn-warning me-2" @click.stop="openEditModal(borrow)">Sửa</button>
-                            <button class="btn btn-sm btn-danger" @click.stop="deleteBorrow(borrow._id)">Xóa</button>
+                            <button v-if="borrow.trangThai !== 'Chờ duyệt' && borrow.trangThai !== 'Đang mượn'"
+                                class="btn btn-sm btn-danger" @click.stop="deleteBorrow(borrow._id)">
+                                Xóa
+                            </button>
                         </td>
                     </tr>
                     <tr v-if="!loading && paginatedBorrows.length === 0">
@@ -195,13 +198,23 @@ export default {
                 }
             } catch (err) {
                 console.error(err);
-                this.showSwal("❌ Lỗi", "Không thể lưu phiếu mượn!", "error");
+                this.showSwal("❌ Lỗi", err.message || "Không thể lưu phiếu mượn!", "error");
             } finally {
                 this.closeForm();
                 this.fetchBorrows();
             }
-        },
+        }
+        ,
         async deleteBorrow(id) {
+            const borrow = this.borrows.find(b => b._id === id);
+            if (!borrow) return;
+
+            if (borrow.trangThai === "Chờ duyệt" || borrow.trangThai === "Đang mượn") {
+                return this.showSwal("⚠️ Không thể xóa",
+                    "Phiếu mượn đang chờ duyệt hoặc đang mượn không thể xóa.",
+                    "warning");
+            }
+
             const result = await Swal.fire({
                 title: "Bạn có chắc chắn?",
                 text: "Phiếu mượn sẽ bị xóa và không thể khôi phục!",
@@ -211,7 +224,9 @@ export default {
                 cancelButtonText: "Hủy",
                 customClass: { popup: "swal-popup-responsive" },
             });
+
             if (!result.isConfirmed) return;
+
             try {
                 await borrowService.delete(id);
                 this.showSwal("🗑️ Đã xóa!", "Phiếu mượn đã được xóa.", "success");
@@ -220,7 +235,8 @@ export default {
                 console.error(err);
                 this.showSwal("❌ Lỗi", "Xóa thất bại!", "error");
             }
-        },
+        }
+        ,
         async openDetailModal(borrow) {
             try {
                 this.selectedBorrow = await borrowService.getDetail(borrow._id);

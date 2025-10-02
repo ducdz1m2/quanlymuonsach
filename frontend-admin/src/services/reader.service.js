@@ -34,6 +34,10 @@ class ReaderService {
     const res = await this.api.delete(`/${id}`);
     return res.data;
   }
+  async getPayment(id) {
+    const res = await this.api.get(`/${id}/payment`);
+    return res.data;
+  }
 }
 
 export default new ReaderService();

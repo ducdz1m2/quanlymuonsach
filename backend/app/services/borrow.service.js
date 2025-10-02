@@ -1,8 +1,10 @@
 const { ObjectId } = require("mongodb");
+const BookService = require("./book.service");
 
 class BorrowService {
   constructor(client) {
     this.Borrow = client.db().collection("borrow");
+    this.bookService = new BookService(client);
   }
 
   extractBorrowData(payload) {
@@ -11,8 +13,7 @@ class BorrowService {
       docGiaId: payload.docGiaId ? new ObjectId(payload.docGiaId) : undefined,
       ngayMuon: payload.ngayMuon,
       ngayTra: payload.ngayTra,
-      trangThai: payload.trangThai ?? "san_sang",
-      // mặc định "san_sang", nhưng nếu payload có thì giữ nguyên
+      trangThai: payload.trangThai ?? "Chờ duyệt",
     };
     Object.keys(borrow).forEach(
       (key) => borrow[key] === undefined && delete borrow[key]
@@ -22,6 +23,16 @@ class BorrowService {
 
   async create(payload) {
     const borrow = this.extractBorrowData(payload);
+
+    // Nếu tạo phiếu đã mượn trực tiếp, kiểm tra số lượng
+    if (borrow.trangThai === "Đang mượn") {
+      const book = await this.bookService.findById(borrow.bookId);
+      if (!book) throw new Error("Không tìm thấy sách");
+      if (book.soQuyen <= 0) throw new Error("Sách đã hết");
+      await this.bookService.update(book._id, { soQuyen: book.soQuyen - 1 });
+    }
+
+    // Tạo phiếu mượn
     const result = await this.Borrow.insertOne(borrow);
     return result.insertedId ? { _id: result.insertedId, ...borrow } : null;
   }
@@ -38,13 +49,38 @@ class BorrowService {
 
   async update(id, payload) {
     if (!ObjectId.isValid(id)) return null;
-    const filter = { _id: new ObjectId(id) };
+
+    const borrow = await this.findById(id);
+    if (!borrow) return null;
+
     const update = this.extractBorrowData(payload);
+    const book = await this.bookService.findById(borrow.bookId);
+    if (!book) throw new Error("Không tìm thấy sách");
+
+    const oldStatus = borrow.trangThai;
+    const newStatus = update.trangThai;
+
+    // Chờ duyệt -> Đang mượn: trừ 1
+    if (oldStatus === "Chờ duyệt" && newStatus === "Đang mượn") {
+      if (book.soQuyen <= 0)
+        throw new Error("Sách đã hết, không thể duyệt mượn");
+      await this.bookService.update(book._id, { soQuyen: book.soQuyen - 1 });
+    }
+
+    // Trả sách: Đang mượn -> Đã trả
+    if (oldStatus === "Đang mượn" && newStatus === "Đã trả") {
+      await this.bookService.update(book._id, {
+        soQuyen: (book.soQuyen || 0) + 1,
+      });
+    }
+
+    // Cập nhật phiếu
     const result = await this.Borrow.findOneAndUpdate(
-      filter,
+      { _id: new ObjectId(id) },
       { $set: update },
       { returnDocument: "after" }
     );
+
     return result.value;
   }
 
@@ -65,9 +101,7 @@ class BorrowService {
     if (!ObjectId.isValid(id)) return null;
 
     const cursor = await this.Borrow.aggregate([
-      {
-        $match: { _id: new ObjectId(id) }, // chỉ lấy borrow theo id
-      },
+      { $match: { _id: new ObjectId(id) } },
       {
         $lookup: {
           from: "book",
@@ -89,8 +123,9 @@ class BorrowService {
     ]);
 
     const results = await cursor.toArray();
-    return results[0] || null; // chỉ trả về 1 object
+    return results[0] || null;
   }
+
   async findAllDetails() {
     const cursor = await this.Borrow.aggregate([
       {

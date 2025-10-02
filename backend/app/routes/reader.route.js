@@ -13,5 +13,6 @@ router
   .get(readers.findOne)
   .put(readers.update)
   .delete(readers.delete);
+router.route("/:id/payment").get(readers.calculatePayment);
 
 module.exports = router;
