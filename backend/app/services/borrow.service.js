@@ -1,12 +1,14 @@
 const { ObjectId } = require("mongodb");
 const BookService = require("./book.service");
+const ApiError = require("../api-error");
 
 class BorrowService {
   constructor(client) {
-    this.Borrow = client.db().collection("borrow");
+    this.Borrow = client.db().collection("borrow"); // collection đúng
     this.bookService = new BookService(client);
   }
 
+  // Sinh mã mượn tự động
   async generateMaMuon() {
     const borrows = await this.Borrow.find({
       maMuon: { $regex: /^MUON-\d{4}$/ },
@@ -25,6 +27,7 @@ class BorrowService {
     return `MUON-${newNumber.toString().padStart(4, "0")}`;
   }
 
+  // Chuẩn hóa dữ liệu phiếu mượn
   async extractBorrowData(payload) {
     let maMuon = payload.maMuon;
     if (!maMuon) maMuon = await this.generateMaMuon();
@@ -45,21 +48,44 @@ class BorrowService {
     return borrow;
   }
 
-  async create(payload) {
-    const borrow = await this.extractBorrowData(payload);
+  // Tạo phiếu mượn
+  async create(data) {
+    // 1. Chuẩn hóa dữ liệu phiếu mượn
+    const borrowData = await this.extractBorrowData(data);
 
-    // Nếu tạo phiếu đã mượn trực tiếp, kiểm tra số lượng
-    if (borrow.trangThai === "Đang mượn") {
-      const book = await this.bookService.findById(borrow.bookId);
-      if (!book) throw new Error("Không tìm thấy sách");
-      if (book.soQuyen <= 0) throw new Error("Sách đã hết");
-      await this.bookService.update(book._id, { soQuyen: book.soQuyen - 1 });
+    // 2. Kiểm tra sách tồn tại & còn quyển
+    const book = await this.bookService.findById(borrowData.bookId);
+    if (!book) throw new ApiError(400, "Sách không tồn tại.");
+    if (book.soQuyen <= 0)
+      throw new ApiError(400, "Sách đã hết, không thể mượn.");
+
+    // 3. Kiểm tra độc giả đang mượn < 3 quyển
+    const activeBorrows = await this.Borrow.countDocuments({
+      docGiaId: borrowData.docGiaId,
+      trangThai: { $in: ["Chờ duyệt", "Đang mượn"] },
+    });
+    if (activeBorrows >= 3) {
+      throw new ApiError(
+        400,
+        "Độc giả đang mượn quá 3 quyển, không thể mượn thêm."
+      );
     }
 
-    const result = await this.Borrow.insertOne(borrow);
-    return result.insertedId ? { _id: result.insertedId, ...borrow } : null;
+    // 4. Giảm soQuyen của sách ngay khi tạo
+    await this.bookService.update(book._id, { soQuyen: book.soQuyen - 1 });
+
+    // 5. Tạo phiếu mượn
+    const insertResult = await this.Borrow.insertOne({
+      ...borrowData,
+      trangThai: "Đang mượn", // hoặc "Chờ duyệt" nếu muốn duyệt sau
+      createdAt: new Date(),
+    });
+
+    // 6. Trả về phiếu vừa tạo
+    return await this.findById(insertResult.insertedId);
   }
 
+  // Lấy danh sách phiếu mượn
   async find(filter) {
     const cursor = await this.Borrow.find(filter);
     return await cursor.toArray();
@@ -78,7 +104,7 @@ class BorrowService {
 
     const update = await this.extractBorrowData(payload);
     const book = await this.bookService.findById(borrow.bookId);
-    if (!book) throw new Error("Không tìm thấy sách");
+    if (!book) throw new ApiError(400, "Không tìm thấy sách");
 
     const oldStatus = borrow.trangThai;
     const newStatus = update.trangThai;
@@ -86,7 +112,7 @@ class BorrowService {
     // Chờ duyệt -> Đang mượn
     if (oldStatus === "Chờ duyệt" && newStatus === "Đang mượn") {
       if (book.soQuyen <= 0)
-        throw new Error("Sách đã hết, không thể duyệt mượn");
+        throw new ApiError(400, "Sách đã hết, không thể duyệt mượn");
       await this.bookService.update(book._id, { soQuyen: book.soQuyen - 1 });
     }
 
@@ -119,6 +145,7 @@ class BorrowService {
     return result.deletedCount;
   }
 
+  // Lấy chi tiết phiếu mượn
   async findDetailById(id) {
     if (!ObjectId.isValid(id)) return null;
 
@@ -171,6 +198,15 @@ class BorrowService {
     ]);
 
     return await cursor.toArray();
+  }
+
+  async countActiveBorrowsByReader(docGiaId) {
+    if (!docGiaId) return 0;
+
+    return await this.Borrow.countDocuments({
+      docGiaId: new ObjectId(docGiaId),
+      trangThai: "Đang mượn",
+    });
   }
 }
 

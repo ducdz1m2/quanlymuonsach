@@ -8,11 +8,18 @@ exports.create = async (req, res, next) => {
       new ApiError(400, "Thông tin sách và độc giả không thể để trống.")
     );
   }
+
   try {
     const borrowService = new BorrowService(MongoDB.client);
     const document = await borrowService.create(req.body);
     return res.send(document);
   } catch (error) {
+    console.error(error); // optional: log lỗi để debug
+
+    if (error instanceof ApiError) {
+      return next(error); // dùng message + status code từ ApiError
+    }
+
     return next(new ApiError(500, "Đã xảy ra lỗi khi tạo phiếu mượn sách."));
   }
 };

@@ -191,6 +191,7 @@ export default {
         openAddModal() { this.editingBorrow = null; this.showForm = true; },
         openEditModal(borrow) { this.editingBorrow = { ...borrow }; this.showForm = true; },
         closeForm() { this.showForm = false; this.editingBorrow = null; },
+
         async handleSave(borrow) {
             try {
                 if (borrow._id) {
@@ -202,12 +203,16 @@ export default {
                 }
             } catch (err) {
                 console.error(err);
-                this.showSwal("❌ Lỗi", err.message || "Không thể lưu phiếu mượn!", "error");
+                // Lấy message từ backend (ApiError.message)
+                const message = err.response?.data?.message || "Không thể lưu phiếu mượn!";
+                this.showSwal("❌ Lỗi", message, "error");
             } finally {
                 this.closeForm();
                 this.fetchBorrows();
             }
         }
+
+
         ,
         async deleteBorrow(id) {
             const borrow = this.borrows.find(b => b._id === id);

@@ -4,8 +4,10 @@
             <!-- Mã mượn (readonly) -->
             <div class="mb-3">
                 <label class="form-label">Mã mượn</label>
-                <input type="text" class="form-control" v-model="localBorrow.maMuon" readonly />
+                <input type="text" class="form-control" v-model="localBorrow.maMuon" readonly
+                    :placeholder="!localBorrow.maMuon ? '(Đang sinh tự động)' : ''" />
             </div>
+
 
             <!-- Sách -->
             <div class="mb-3">
@@ -202,11 +204,7 @@ export default {
         await this.fetchBooks();
         await this.fetchReaders();
 
-        // Nếu tạo mới, sinh maMuon
-        if (!this.localBorrow.maMuon) {
-            const temp = await borrowService.generateMaMuon();
-            this.localBorrow.maMuon = temp;
-        }
+
     }
 };
 </script>
