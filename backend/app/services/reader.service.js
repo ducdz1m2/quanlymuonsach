@@ -13,6 +13,7 @@ class ReaderService {
       phai: payload.phai,
       diaChi: payload.diaChi,
       dienThoai: payload.dienThoai,
+      anh: payload.anh || "/images/default-reader.png",
     };
     Object.keys(reader).forEach(
       (key) => reader[key] === undefined && delete reader[key]

@@ -23,7 +23,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="borrow in paginatedBorrows" :key="borrow._id">
+                    <tr v-for="borrow in paginatedBorrows" :key="borrow._id" @click="openDetailModal(borrow)"
+                        style="cursor: pointer;">
                         <td class="text-start">{{ borrow.bookInfo?.tenSach || borrow.bookId }}</td>
                         <td class="text-start">
                             {{ borrow.docGiaInfo ? borrow.docGiaInfo.hoLot + ' ' + borrow.docGiaInfo.ten :
@@ -33,13 +34,12 @@
                         <td>{{ borrow.ngayTra }}</td>
                         <td>
                             <span :class="statusClass(borrow.trangThai)">
-                                {{ statusLabel(borrow.trangThai) }}
+                                {{ borrow.trangThai }}
                             </span>
                         </td>
-
                         <td>
-                            <button class="btn btn-sm btn-warning me-2" @click="openEditModal(borrow)">Sửa</button>
-                            <button class="btn btn-sm btn-danger" @click="deleteBorrow(borrow._id)">Xóa</button>
+                            <button class="btn btn-sm btn-warning me-2" @click.stop="openEditModal(borrow)">Sửa</button>
+                            <button class="btn btn-sm btn-danger" @click.stop="deleteBorrow(borrow._id)">Xóa</button>
                         </td>
                     </tr>
                     <tr v-if="!loading && paginatedBorrows.length === 0">
@@ -60,89 +60,118 @@
                 ▶</button>
         </div>
 
-        <!-- Modal -->
-        <div v-if="showForm" class="modal-backdrop">
+        <!-- Modal Form -->
+        <div v-if="showForm" class="modal-backdrop" @click.self="closeForm">
             <div class="modal-content p-4">
                 <h5>{{ editingBorrow ? "✏️ Sửa phiếu mượn" : "➕ Thêm phiếu mượn" }}</h5>
-                <BorrowForm :borrow="editingBorrow" @save="handleSave" @cancel="closeForm" />
+                <BorrowForm :borrow="editingBorrow" @save="handleSave" @cancel="closeForm" @delete="handleDelete" />
+            </div>
+        </div>
+
+        <!-- Modal Chi tiết -->
+        <div v-if="showDetailModal" class="modal-backdrop" @click.self="closeDetailModal">
+            <div class="modal-content p-4 detail-modal">
+                <h5 class="mb-3">📄 Chi tiết phiếu mượn</h5>
+
+                <div class="detail-grid">
+                    <!-- Thông tin sách -->
+                    <div class="detail-section">
+                        <h6>📚 Thông tin sách</h6>
+                        <p><b>Tên sách:</b> {{ selectedBorrow.bookInfo?.tenSach }}</p>
+                        <p><b>Tác giả:</b> {{ selectedBorrow.bookInfo?.tacGia }}</p>
+                        <p><b>Năm xuất bản:</b> {{ selectedBorrow.bookInfo?.namXuatBan }}</p>
+                        <p><b>Số lượng:</b> {{ selectedBorrow.bookInfo?.soQuyen }}</p>
+                        <p><b>Đơn giá:</b> {{ selectedBorrow.bookInfo?.donGia }}</p>
+                        <p><b>Mô tả:</b> {{ selectedBorrow.bookInfo?.moTa }}</p>
+                    </div>
+
+                    <!-- Thông tin độc giả -->
+                    <div class="detail-section">
+                        <h6>👤 Thông tin độc giả</h6>
+                        <p><b>Họ và tên:</b> {{ selectedBorrow.docGiaInfo?.hoLot }} {{ selectedBorrow.docGiaInfo?.ten }}
+                        </p>
+                        <p><b>Ngày sinh:</b> {{ selectedBorrow.docGiaInfo?.ngaySinh }}</p>
+                        <p><b>Giới tính:</b> {{ selectedBorrow.docGiaInfo?.phai }}</p>
+                        <p><b>Địa chỉ:</b> {{ selectedBorrow.docGiaInfo?.diaChi }}</p>
+                        <p><b>Điện thoại:</b> {{ selectedBorrow.docGiaInfo?.dienThoai }}</p>
+                    </div>
+                </div>
+
+                <!-- Thông tin mượn -->
+                <div class="mt-3">
+                    <h6>📅 Thông tin mượn</h6>
+                    <p><b>Ngày mượn:</b> {{ selectedBorrow.ngayMuon }}</p>
+                    <p><b>Ngày trả:</b> {{ selectedBorrow.ngayTra }}</p>
+                    <p><b>Trạng thái:</b>
+                        <span :class="statusClass(selectedBorrow.trangThai)">
+                            {{ selectedBorrow.trangThai }}
+                        </span>
+                    </p>
+                </div>
+
+                <div class="text-end mt-3">
+                    <button class="btn btn-secondary" @click="closeDetailModal">Đóng</button>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script>
+import Swal from "sweetalert2";
 import BorrowForm from "@/components/borrows/BorrowForm.vue";
 import borrowService from "@/services/borrow.service";
 
 export default {
     components: { BorrowForm },
-
     data() {
         return {
             borrows: [],
             searchQuery: "",
             loading: false,
-
             showForm: false,
             editingBorrow: null,
-
             currentPage: 1,
             itemsPerPage: 5,
+
+            selectedBorrow: null,
+            showDetailModal: false,
         };
     },
-
     computed: {
         filteredBorrows() {
             const q = this.searchQuery.trim().toLowerCase();
             if (!q) return this.borrows;
-
             return this.borrows.filter((b) => {
                 const tenSach = b.bookInfo?.tenSach?.toLowerCase() || "";
                 const docGia = b.docGiaInfo ? (b.docGiaInfo.hoLot + " " + b.docGiaInfo.ten).toLowerCase() : "";
                 return tenSach.includes(q) || docGia.includes(q);
             });
         },
-
         totalPages() {
             return Math.ceil(this.filteredBorrows.length / this.itemsPerPage);
         },
-
         paginatedBorrows() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
             const end = start + this.itemsPerPage;
             return this.filteredBorrows.slice(start, end);
         },
     },
-
     methods: {
-        statusLabel(status) {
-            switch (status) {
-                case "san_sang": return "Sẵn sàng";
-                case "cho_duyet": return "Chờ duyệt";
-                case "da_duyet": return "Đã duyệt";
-                case "dang_muon": return "Đang mượn";
-                case "da_tra": return "Đã trả";
-                default: return status;
-            }
-        },
         statusClass(status) {
             switch (status) {
-                case "san_sang": return "badge bg-secondary";
-                case "cho_duyet": return "badge bg-warning text-dark";
-                case "da_duyet": return "badge bg-info text-dark";
-                case "dang_muon": return "badge bg-danger";
-                case "da_tra": return "badge bg-success";
+                case "Sẵn sàng": return "badge bg-secondary";
+                case "Chờ duyệt": return "badge bg-warning text-dark";
+                case "Đã duyệt": return "badge bg-info text-dark";
+                case "Đang mượn": return "badge bg-danger";
+                case "Đã trả": return "badge bg-success";
                 default: return "badge bg-light";
             }
         },
         async fetchBorrows() {
             this.loading = true;
             try {
-                // Lấy danh sách có kèm detail (nếu backend hỗ trợ endpoint /api/borrows/detail/all thì tốt hơn)
-                const data = await borrowService.getAll();
-                // Sau đó load thêm detail từng cái
-                const details = await Promise.all(data.map(item => borrowService.getDetail(item._id)));
-                this.borrows = details;
+                this.borrows = await borrowService.getAllDetails();
             } catch (err) {
                 this.borrows = [];
                 console.error("Lỗi tải borrow:", err);
@@ -150,59 +179,89 @@ export default {
                 this.loading = false;
             }
         },
-
-        prevPage() {
-            if (this.currentPage > 1) this.currentPage--;
-        },
-
-        nextPage() {
-            if (this.currentPage < this.totalPages) this.currentPage++;
-        },
-
-        openAddModal() {
-            this.editingBorrow = null;
-            this.showForm = true;
-        },
-
-        openEditModal(borrow) {
-            this.editingBorrow = { ...borrow };
-            this.showForm = true;
-        },
-
-        closeForm() {
-            this.showForm = false;
-            this.editingBorrow = null;
-        },
-
+        prevPage() { if (this.currentPage > 1) this.currentPage--; },
+        nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
+        openAddModal() { this.editingBorrow = null; this.showForm = true; },
+        openEditModal(borrow) { this.editingBorrow = { ...borrow }; this.showForm = true; },
+        closeForm() { this.showForm = false; this.editingBorrow = null; },
         async handleSave(borrow) {
             try {
                 if (borrow._id) {
                     await borrowService.update(borrow._id, borrow);
+                    this.showSwal("✅ Thành công", "Cập nhật phiếu mượn thành công!", "success");
                 } else {
                     await borrowService.create(borrow);
+                    this.showSwal("✅ Thành công", "Thêm phiếu mượn mới!", "success");
                 }
             } catch (err) {
-                console.error("Lỗi lưu borrow:", err);
+                console.error(err);
+                this.showSwal("❌ Lỗi", "Không thể lưu phiếu mượn!", "error");
             } finally {
                 this.closeForm();
                 this.fetchBorrows();
             }
         },
-
         async deleteBorrow(id) {
+            const result = await Swal.fire({
+                title: "Bạn có chắc chắn?",
+                text: "Phiếu mượn sẽ bị xóa và không thể khôi phục!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xóa",
+                cancelButtonText: "Hủy",
+                customClass: { popup: "swal-popup-responsive" },
+            });
+            if (!result.isConfirmed) return;
             try {
                 await borrowService.delete(id);
-                await this.fetchBorrows();
+                this.showSwal("🗑️ Đã xóa!", "Phiếu mượn đã được xóa.", "success");
+                this.fetchBorrows();
             } catch (err) {
-                console.error("Lỗi xóa borrow:", err);
-                alert("❌ Xóa thất bại!");
+                console.error(err);
+                this.showSwal("❌ Lỗi", "Xóa thất bại!", "error");
             }
         },
+        async openDetailModal(borrow) {
+            try {
+                this.selectedBorrow = await borrowService.getDetail(borrow._id);
+                this.showDetailModal = true;
+            } catch (err) {
+                console.error(err);
+                this.showSwal("❌ Lỗi", "Không thể tải chi tiết phiếu mượn!", "error");
+            }
+        },
+        // Trong methods
+        async handleDelete(borrow) {
+            try {
+                await borrowService.delete(borrow._id);
+                await this.fetchBorrows();
+                this.closeForm();
+                Swal.fire({
+                    icon: "success",
+                    title: "Đã xóa!",
+                    timer: 1500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: "top-end",
+                });
+            } catch (err) {
+                console.error(err);
+                Swal.fire("❌ Lỗi!", "Không thể xóa phiếu mượn.", "error");
+            }
+        }
+        ,
+        closeDetailModal() { this.selectedBorrow = null; this.showDetailModal = false; },
+        showSwal(title, text, icon) {
+            Swal.fire({
+                title,
+                text,
+                icon,
+                confirmButtonText: "OK",
+                customClass: { popup: "swal-popup-responsive" },
+            });
+        },
     },
-
-    mounted() {
-        this.fetchBorrows();
-    },
+    mounted() { this.fetchBorrows(); },
 };
 </script>
 
@@ -219,15 +278,84 @@ export default {
     align-items: center;
     justify-content: center;
     z-index: 1050;
+    padding: 10px;
 }
 
 .modal-content {
     background: white;
-    border-radius: 8px;
-    width: 400px;
+    border-radius: 10px;
+    width: 600px;
+    max-width: 95%;
     max-height: 80vh;
     overflow-y: auto;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.detail-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.detail-section {
+    flex: 1 1 45%;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.detail-section h6 {
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #333;
+}
+
+.detail-section p {
+    margin: 4px 0;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .detail-grid {
+        flex-direction: column;
+    }
+
+    .detail-section {
+        flex: 1 1 100%;
+    }
+}
+
+/* SweetAlert responsive */
+.swal-popup-responsive {
+    width: 90% !important;
+    max-width: 400px !important;
+    font-size: 14px !important;
+}
+
+@media(min-width:768px) {
+    .swal-popup-responsive {
+        width: 400px !important;
+        font-size: 16px !important;
+    }
+}
+
+/* Toast nhỏ cho mobile */
+.swal2-toast {
+    font-size: 13px !important;
+    min-width: 180px !important;
+}
+
+@media (max-width:480px) {
+    .swal2-toast {
+        font-size: 12px !important;
+        min-width: 150px !important;
+    }
 }
 </style>

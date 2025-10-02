@@ -9,9 +9,11 @@
         <div v-else>
             <img :src="preview" alt="Preview" class="img-thumbnail mb-2" style="max-height: 200px; object-fit: cover" />
             <div class="d-flex justify-content-center gap-2">
-                <button class="btn btn-sm btn-danger" @click="removeImage">❌ Xóa</button>
-                <button class="btn btn-sm btn-secondary" @click="$refs.fileInput.click()">📂 Chọn ảnh khác</button>
+                <button type="button" class="btn btn-sm btn-danger" @click="removeImage">❌ Xóa</button>
+                <button type="button" class="btn btn-sm btn-secondary" @click="$refs.fileInput.click()">📂 Chọn ảnh
+                    khác</button>
             </div>
+
             <input type="file" accept="image/*" ref="fileInput" class="d-none" @change="handleFileSelect" />
         </div>
     </div>

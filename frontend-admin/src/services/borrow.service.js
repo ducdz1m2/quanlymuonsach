@@ -11,7 +11,7 @@ class BorrowService {
   }
 
   async getDetail(id) {
-    const res = await this.api.get(`/detail/${id}`);
+    const res = await this.api.get(`/${id}`);
     return res.data;
   }
 
@@ -27,6 +27,10 @@ class BorrowService {
 
   async delete(id) {
     const res = await this.api.delete(`/${id}`);
+    return res.data;
+  }
+  async getAllDetails() {
+    const res = await this.api.get("/details");
     return res.data;
   }
 }

@@ -28,11 +28,11 @@ exports.findAll = async (_req, res, next) => {
     );
   }
 };
-
 exports.findOne = async (req, res, next) => {
   try {
     const borrowService = new BorrowService(MongoDB.client);
-    const document = await borrowService.findById(req.params.id);
+    const document = await borrowService.findDetailById(req.params.id); // dùng findDetailById
+
     if (document === null) {
       return next(new ApiError(404, "Không tìm thấy phiếu mượn."));
     }
@@ -111,6 +111,17 @@ exports.findDetail = async (req, res, next) => {
   } catch (error) {
     return next(
       new ApiError(500, `Lỗi khi lấy chi tiết phiếu mượn id=${req.params.id}`)
+    );
+  }
+};
+exports.findAllDetails = async (_req, res, next) => {
+  try {
+    const borrowService = new BorrowService(MongoDB.client);
+    const docs = await borrowService.findAllDetails();
+    return res.send(docs);
+  } catch (error) {
+    return next(
+      new ApiError(500, "Lỗi khi lấy danh sách phiếu mượn có chi tiết")
     );
   }
 };

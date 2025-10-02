@@ -91,6 +91,30 @@ class BorrowService {
     const results = await cursor.toArray();
     return results[0] || null; // chỉ trả về 1 object
   }
+  async findAllDetails() {
+    const cursor = await this.Borrow.aggregate([
+      {
+        $lookup: {
+          from: "book",
+          localField: "bookId",
+          foreignField: "_id",
+          as: "bookInfo",
+        },
+      },
+      {
+        $lookup: {
+          from: "reader",
+          localField: "docGiaId",
+          foreignField: "_id",
+          as: "docGiaInfo",
+        },
+      },
+      { $unwind: "$bookInfo" },
+      { $unwind: "$docGiaInfo" },
+    ]);
+
+    return await cursor.toArray();
+  }
 }
 
 module.exports = BorrowService;

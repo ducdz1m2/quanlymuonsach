@@ -19,6 +19,7 @@
                         <th>Phái</th>
                         <th>Địa chỉ</th>
                         <th>Điện thoại</th>
+                        <th>Ảnh</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -31,15 +32,19 @@
                         <td class="text-start">{{ reader.diaChi }}</td>
                         <td>{{ reader.dienThoai }}</td>
                         <td>
+                            <img :src="reader.anh || '/images/default-reader.png'" width="60" height="80"
+                                class="rounded shadow-sm" />
+                        </td>
+                        <td>
                             <button class="btn btn-sm btn-warning me-2" @click="openEditModal(reader)">Sửa</button>
-                            <button class="btn btn-sm btn-danger" @click="deleteReader(reader._id)">Xóa</button>
+                            <button class="btn btn-sm btn-danger" @click="confirmDelete(reader)">Xóa</button>
                         </td>
                     </tr>
                     <tr v-if="!loading && paginatedReaders.length === 0">
-                        <td colspan="7">Không có độc giả phù hợp</td>
+                        <td colspan="8">Không có độc giả phù hợp</td>
                     </tr>
                     <tr v-if="loading">
-                        <td colspan="7">⏳ Đang tải dữ liệu...</td>
+                        <td colspan="8">⏳ Đang tải dữ liệu...</td>
                     </tr>
                 </tbody>
             </table>
@@ -57,7 +62,7 @@
         <div v-if="showForm" class="modal-backdrop">
             <div class="modal-content p-4">
                 <h5>{{ editingReader ? "✏️ Sửa độc giả" : "➕ Thêm độc giả" }}</h5>
-                <ReaderForm :reader="editingReader" @save="handleSave" @cancel="closeForm" />
+                <ReaderForm :reader="editingReader" @save="handleSave" @cancel="closeForm" @delete="handleDelete" />
             </div>
         </div>
     </div>
@@ -66,6 +71,7 @@
 <script>
 import ReaderForm from "@/components/readers/ReaderForm.vue";
 import readerService from "@/services/reader.service";
+import Swal from "sweetalert2";
 
 export default {
     components: { ReaderForm },
@@ -155,24 +161,80 @@ export default {
             try {
                 if (reader._id) {
                     await readerService.update(reader._id, reader);
+                    await Swal.fire({
+                        icon: "success",
+                        title: "Cập nhật độc giả thành công!",
+                        showConfirmButton: false,
+                        timer: 1500,
+                        toast: true,
+                        position: "top-end",
+                    });
                 } else {
                     await readerService.create(reader);
+                    await Swal.fire({
+                        icon: "success",
+                        title: "Thêm độc giả thành công!",
+                        showConfirmButton: false,
+                        timer: 1500,
+                        toast: true,
+                        position: "top-end",
+                    });
                 }
             } catch (err) {
                 console.error("Lỗi lưu độc giả:", err);
+                await Swal.fire("❌ Lỗi!", "Không thể lưu độc giả.", "error");
             } finally {
                 this.closeForm();
                 this.fetchReaders();
             }
         },
-
-        async deleteReader(id) {
+        async handleDelete(reader) {
             try {
-                await readerService.delete(id);
+                await readerService.delete(reader._id);
                 await this.fetchReaders();
+                this.closeForm();
+                Swal.fire({
+                    icon: "success",
+                    title: "Đã xóa!",
+                    timer: 1500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: "top-end",
+                });
             } catch (err) {
-                console.error("Lỗi xóa độc giả:", err);
-                alert("❌ Xóa thất bại!");
+                console.error(err);
+                Swal.fire("❌ Lỗi!", "Không thể xóa độc giả.", "error");
+            }
+        }
+        ,
+        async confirmDelete(reader) {
+            const result = await Swal.fire({
+                title: "Bạn có chắc muốn xóa?",
+                text: `Độc giả: ${reader.hoLot} ${reader.ten}`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xóa",
+                cancelButtonText: "Hủy",
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await readerService.delete(reader._id);
+                    await this.fetchReaders();
+                    await Swal.fire({
+                        icon: "success",
+                        title: "Đã xóa!",
+                        showConfirmButton: false,
+                        timer: 1500,
+                        toast: true,
+                        position: "top-end",
+                    });
+                } catch (err) {
+                    console.error("Lỗi xóa độc giả:", err);
+                    await Swal.fire("❌ Xóa thất bại!", "", "error");
+                }
             }
         },
     },

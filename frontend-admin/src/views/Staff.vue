@@ -64,25 +64,21 @@
         <div v-if="showForm" class="modal-backdrop">
             <div class="modal-content p-4">
                 <h5>{{ editingStaff ? "✏️ Sửa nhân viên" : "➕ Thêm nhân viên" }}</h5>
-                <StaffForm :staff="editingStaff" @save="handleSave" @cancel="closeForm" />
+                <StaffForm :staff="editingStaff" @save="handleSave" @cancel="closeForm" @delete="handleDelete" />
             </div>
         </div>
     </div>
 </template>
-
 <script>
 import staffService from '@/services/staff.service';
 import StaffForm from '@/components/staffs/StaffForm.vue';
-export default {
+import Swal from 'sweetalert2';
 
-    components: {
-        StaffForm
-    },
+export default {
+    components: { StaffForm },
 
     data() {
-
         return {
-
             staffs: [],
             searchQuery: "",
             loading: false,
@@ -116,10 +112,7 @@ export default {
                 );
             });
         },
-
-        totalPages() {
-            return Math.ceil(this.filteredStaffs.length / this.itemsPerPage);
-        },
+        totalPages() { return Math.ceil(this.filteredStaffs.length / this.itemsPerPage); },
         paginatedStaffs() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
             const end = start + this.itemsPerPage;
@@ -129,69 +122,74 @@ export default {
 
     methods: {
         async fetchStaffs() {
-            // TODO: gọi API lấy danh sách nhân viên
             this.loading = true;
-            try {
-                this.staffs = await staffService.getAll();
+            try { this.staffs = await staffService.getAll(); }
+            catch { this.staffs = []; }
+            finally { this.loading = false; }
+        },
 
-            } catch (err) {
-                this.staffs = []
-            } finally {
-                this.loading = false;
-            }
-        },
-        prevPage() {
-            if (this.currentPage > 1) this.currentPage--;
-        },
-        nextPage() {
-            if (this.currentPage < this.totalPages) this.currentPage++;
-        },
-        openAddModal() {
-            this.editingStaff = null;
-            this.showForm = true;
-        },
-        openEditModal(staff) {
-            this.editingStaff = { ...staff };
-            this.showForm = true;
-        },
-        closeForm() {
-            this.showForm = false;
-            this.editingStaff = null;
-        },
+        prevPage() { if (this.currentPage > 1) this.currentPage--; },
+        nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
+
+        openAddModal() { this.editingStaff = null; this.showForm = true; },
+        openEditModal(staff) { this.editingStaff = { ...staff }; this.showForm = true; },
+        closeForm() { this.showForm = false; this.editingStaff = null; },
+
         async handleSave(staff) {
-            // TODO: thêm/sửa nhân viên
             try {
-                if (staff._id) {
-                    await staffService.update(staff._id, staff);
-
-                } else {
-                    await staffService.create(staff);
-                }
-
-            } catch (err) {
-                console.error("Lỗi lưu nhân viên:", err);
-            } finally {
-                this.closeForm();
-                this.fetchStaffs();
-            }
-        },
-        async deleteStaff(id) {
-            // TODO: xóa nhân viên
-            try {
-                await staffService.delete(id);
+                if (staff._id) await staffService.update(staff._id, staff);
+                else await staffService.create(staff);
                 await this.fetchStaffs();
             } catch (err) {
-                console.error("Lỗi xóa nhân viên:", err);
-                alert("❌ Xóa thất bại!");
+                console.error("Lỗi lưu nhân viên:", err);
+                Swal.fire("❌ Lỗi!", "Không thể lưu nhân viên.", "error");
+            } finally {
+                this.closeForm();
             }
+        },
+
+        async handleDelete(staff) {
+            const result = await Swal.fire({
+                title: "Bạn chắc chắn muốn xóa?",
+                text: `Nhân viên: ${staff.hoTenNV}`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xóa",
+                cancelButtonText: "Hủy",
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await staffService.delete(staff._id);
+                    await this.fetchStaffs();
+                    this.closeForm();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Đã xóa nhân viên!",
+                        timer: 1500,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: "top-end",
+                    });
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire("❌ Xóa thất bại!", "", "error");
+                }
+            }
+        },
+
+        async deleteStaff(id) {
+            const staff = this.staffs.find(s => s._id === id);
+            if (staff) await this.handleDelete(staff);
         },
     },
 
-    mounted() {
-        this.fetchStaffs();
-    },
+    mounted() { this.fetchStaffs(); },
 };
 </script>
+
 
 <style scoped>
 .table img {

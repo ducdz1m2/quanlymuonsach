@@ -37,8 +37,12 @@
                                 class="rounded shadow-sm" />
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-warning me-2" @click="openEditModal(book)">Sửa</button>
-                            <button class="btn btn-sm btn-danger" @click="deleteBook(book._id)">Xóa</button>
+                            <button class="btn btn-sm btn-warning me-2" @click="openEditModal(book)">
+                                Sửa
+                            </button>
+                            <button class="btn btn-sm btn-danger" @click="deleteBook(book._id)">
+                                Xóa
+                            </button>
                         </td>
                     </tr>
                     <tr v-if="!loading && paginatedBooks.length === 0">
@@ -53,24 +57,29 @@
 
         <!-- Phân trang -->
         <div class="d-flex justify-content-center mt-3 gap-2" v-if="totalPages > 1">
-            <button class="btn btn-outline-primary" :disabled="currentPage === 1" @click="prevPage">◀ Trước</button>
+            <button class="btn btn-outline-primary" :disabled="currentPage === 1" @click="prevPage">
+                ◀ Trước
+            </button>
             <span class="align-self-center">Trang {{ currentPage }} / {{ totalPages || 1 }}</span>
-            <button class="btn btn-outline-primary" :disabled="currentPage === totalPages" @click="nextPage">Sau
-                ▶</button>
+            <button class="btn btn-outline-primary" :disabled="currentPage === totalPages" @click="nextPage">
+                Sau ▶
+            </button>
         </div>
 
         <!-- Modal thêm/sửa -->
-        <div v-if="showForm" class="modal-backdrop">
+        <div v-if="showForm" class="modal-backdrop" @click.self="closeForm">
             <div class="modal-content p-4">
                 <h5>{{ editingBook ? "✏️ Sửa sách" : "➕ Thêm sách" }}</h5>
-                <BookForm :book="editingBook" @save="handleSave" @cancel="closeForm" />
+                <BookForm :book="editingBook" @save="handleSave" @delete="handleDelete" @cancel="closeForm" />
             </div>
         </div>
     </div>
 </template>
+
 <script>
 import BookService from "@/services/book.service";
 import BookForm from "@/components/books/BookForm.vue";
+import Swal from "sweetalert2";
 
 export default {
     components: { BookForm },
@@ -80,11 +89,8 @@ export default {
             books: [],
             searchQuery: "",
             loading: false,
-
             showForm: false,
             editingBook: null,
-
-            // phân trang
             currentPage: 1,
             itemsPerPage: 5,
         };
@@ -100,21 +106,13 @@ export default {
                 return name.includes(q) || author.includes(q);
             });
         },
-
         totalPages() {
             return Math.ceil(this.filteredBooks.length / this.itemsPerPage);
         },
-
         paginatedBooks() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
             const end = start + this.itemsPerPage;
             return this.filteredBooks.slice(start, end);
-        },
-    },
-
-    watch: {
-        searchQuery() {
-            this.currentPage = 1;
         },
     },
 
@@ -134,7 +132,6 @@ export default {
         prevPage() {
             if (this.currentPage > 1) this.currentPage--;
         },
-
         nextPage() {
             if (this.currentPage < this.totalPages) this.currentPage++;
         },
@@ -143,12 +140,10 @@ export default {
             this.editingBook = null;
             this.showForm = true;
         },
-
         openEditModal(book) {
             this.editingBook = { ...book };
             this.showForm = true;
         },
-
         closeForm() {
             this.showForm = false;
             this.editingBook = null;
@@ -163,22 +158,73 @@ export default {
                 }
                 await this.fetchBooks();
                 this.closeForm();
+
+                Swal.fire({
+                    icon: "success",
+                    title: book._id ? "Cập nhật thành công!" : "Thêm thành công!",
+                    text: book.tenSach,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    position: "top-end",
+                    customClass: { popup: "swal-popup-responsive" },
+                });
             } catch (err) {
                 console.error("Lỗi lưu sách:", err);
-            } finally {
-                this.fetchBooks();
+                Swal.fire("❌ Lỗi!", "Không thể lưu sách.", "error");
             }
         },
 
         async deleteBook(id) {
-            if (confirm("Bạn có chắc muốn xóa sách này không?")) {
+            const book = this.books.find((b) => b._id === id);
+            const result = await Swal.fire({
+                title: "Bạn có chắc muốn xóa?",
+                text: `Sách: ${book.tenSach}`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xóa",
+                cancelButtonText: "Hủy",
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                customClass: { popup: "swal-popup-responsive" },
+            });
+
+            if (result.isConfirmed) {
                 try {
                     await BookService.delete(id);
                     await this.fetchBooks();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Đã xóa!",
+                        timer: 1500,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: "top-end",
+                        customClass: { popup: "swal-popup-responsive" },
+                    });
                 } catch (err) {
                     console.error("Lỗi khi xóa:", err);
-                    alert("❌ Xóa thất bại!");
+                    Swal.fire("❌ Lỗi!", "Không thể xóa sách.", "error");
                 }
+            }
+        },
+
+        async handleDelete(book) {
+            try {
+                await BookService.delete(book._id);
+                await this.fetchBooks();
+                this.closeForm();
+                Swal.fire({
+                    icon: "success",
+                    title: "Đã xóa!",
+                    timer: 1500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: "top-end",
+                });
+            } catch (err) {
+                console.error(err);
+                Swal.fire("❌ Lỗi!", "Không thể xóa sách.", "error");
             }
         },
     },
@@ -189,14 +235,13 @@ export default {
 };
 </script>
 
-
 <style scoped>
-.table img {
-    object-fit: cover;
-}
-
 .text-start {
     text-align: left;
+}
+
+.table img {
+    object-fit: cover;
 }
 
 .modal-backdrop {
@@ -207,30 +252,51 @@ export default {
     align-items: center;
     justify-content: center;
     z-index: 1050;
+    padding: 10px;
 }
 
 .modal-content {
     background: white;
-    border-radius: 8px;
-    width: 400px;
-    /* nhỏ hơn */
+    border-radius: 10px;
+    width: 600px;
+    max-width: 95%;
     max-height: 80vh;
-    /* không quá cao */
     overflow-y: auto;
-    /* có cuộn nếu nhiều input */
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    padding: 25px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
+@media (max-width: 768px) {
+    .modal-content {
+        width: 100%;
+        padding: 20px;
     }
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+/* SweetAlert responsive */
+.swal-popup-responsive {
+    width: 90% !important;
+    max-width: 400px !important;
+    font-size: 14px !important;
+}
+
+@media (min-width: 768px) {
+    .swal-popup-responsive {
+        width: 400px !important;
+        font-size: 16px !important;
+    }
+}
+
+/* Toast nhỏ cho mobile */
+.swal2-toast {
+    font-size: 13px !important;
+    min-width: 180px !important;
+}
+
+@media (max-width: 480px) {
+    .swal2-toast {
+        font-size: 12px !important;
+        min-width: 150px !important;
     }
 }
 </style>

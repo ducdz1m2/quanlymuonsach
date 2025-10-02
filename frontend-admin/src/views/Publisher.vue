@@ -2,14 +2,12 @@
     <div class="p-4">
         <h1 class="mb-4">👨‍💼 Quản lý Nhà xuất bản</h1>
 
-        <!-- Thanh công cụ -->
         <div class="d-flex justify-content-between mb-3">
             <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm nhà xuất bản..."
                 v-model="searchQuery" />
             <button class="btn btn-primary" @click="openAddModal">+ Thêm nhà xuất bản</button>
         </div>
 
-        <!-- Bảng danh sách -->
         <div class="table-responsive">
             <table class="table table-bordered table-hover text-center align-middle">
                 <thead class="table-dark">
@@ -24,27 +22,25 @@
                     <tr v-for="publisher in paginatedPublishers" :key="publisher._id">
                         <td class="text-start">{{ publisher.tenNXB }}</td>
                         <td class="text-start">{{ publisher.diaChi }}</td>
-
                         <td>
                             <img :src="publisher.anh || '/images/default-publisher.png'" width="60" height="80"
                                 class="rounded shadow-sm" />
                         </td>
                         <td>
                             <button class="btn btn-sm btn-warning me-2" @click="openEditModal(publisher)">Sửa</button>
-                            <button class="btn btn-sm btn-danger" @click="deletePublisher(publisher._id)">Xóa</button>
+                            <button class="btn btn-sm btn-danger" @click="confirmDelete(publisher)">Xóa</button>
                         </td>
                     </tr>
                     <tr v-if="!loading && paginatedPublishers.length === 0">
-                        <td colspan="9">Không có NXB phù hợp</td>
+                        <td colspan="4">Không có NXB phù hợp</td>
                     </tr>
                     <tr v-if="loading">
-                        <td colspan="9">⏳ Đang tải dữ liệu...</td>
+                        <td colspan="4">⏳ Đang tải dữ liệu...</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Phân trang -->
         <div class="d-flex justify-content-center mt-3 gap-2" v-if="totalPages > 1">
             <button class="btn btn-outline-primary" :disabled="currentPage === 1" @click="prevPage">◀ Trước</button>
             <span class="align-self-center">Trang {{ currentPage }} / {{ totalPages || 1 }}</span>
@@ -55,7 +51,8 @@
         <div v-if="showForm" class="modal-backdrop">
             <div class="modal-content p-4">
                 <h5>{{ editingPublisher ? "✏️ Sửa NXB" : "➕ Thêm NXB" }}</h5>
-                <PublisherForm :publisher="editingPublisher" @save="handleSave" @cancel="closeForm" />
+                <PublisherForm :publisher="editingPublisher" @save="handleSave" @cancel="closeForm"
+                    @delete="handleDelete" />
             </div>
         </div>
     </div>
@@ -64,117 +61,106 @@
 <script>
 import PublisherForm from '@/components/publishers/PublisherForm.vue';
 import publisherService from '@/services/publisher.service';
+import Swal from "sweetalert2";
+
 export default {
-
-    components: {
-        PublisherForm
-    },
-
+    components: { PublisherForm },
     data() {
-
         return {
-
             publishers: [],
             searchQuery: "",
             loading: false,
-
             showForm: false,
             editingPublisher: null,
-
             currentPage: 1,
             itemsPerPage: 5,
         };
     },
-
     computed: {
         filteredPublishers() {
             const q = this.searchQuery.trim().toLowerCase();
             if (!q) return this.publishers;
-
-            return this.publishers.filter(b => {
-                const name = b.tenNXB ? b.tenNXB.toLowerCase() : "";
-                const address = b.diaChi ? b.diaChi.toLowerCase() : "";
-
-                return (
-                    name.includes(q) ||
-                    address.includes(q)
-                );
-            });
+            return this.publishers.filter(p =>
+                (p.tenNXB?.toLowerCase().includes(q)) ||
+                (p.diaChi?.toLowerCase().includes(q))
+            );
         },
-
-        totalPages() {
-            return Math.ceil(this.filteredPublishers.length / this.itemsPerPage);
-        },
+        totalPages() { return Math.ceil(this.filteredPublishers.length / this.itemsPerPage); },
         paginatedPublishers() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
-            const end = start + this.itemsPerPage;
-            return this.filteredPublishers.slice(start, end);
+            return this.filteredPublishers.slice(start, start + this.itemsPerPage);
         },
     },
-
     methods: {
         async fetchPublishers() {
             this.loading = true;
-            try {
-                this.publishers = await publisherService.getAll();
-
-            } catch (err) {
-                this.publishers = []
-            } finally {
-                this.loading = false;
-            }
+            try { this.publishers = await publisherService.getAll(); }
+            catch (err) { this.publishers = []; }
+            finally { this.loading = false; }
         },
-        prevPage() {
-            if (this.currentPage > 1) this.currentPage--;
-        },
-        nextPage() {
-            if (this.currentPage < this.totalPages) this.currentPage++;
-        },
-        openAddModal() {
-            this.editingPublisher = null;
-            this.showForm = true;
-        },
-        openEditModal(publisher) {
-            this.editingPublisher = { ...publisher };
-            this.showForm = true;
-        },
-        closeForm() {
-            this.showForm = false;
-            this.editingPublisher = null;
-        },
+        prevPage() { if (this.currentPage > 1) this.currentPage--; },
+        nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
+        openAddModal() { this.editingPublisher = null; this.showForm = true; },
+        openEditModal(publisher) { this.editingPublisher = { ...publisher }; this.showForm = true; },
+        closeForm() { this.showForm = false; this.editingPublisher = null; },
         async handleSave(publisher) {
             try {
-
-                if (publisher._id) {
-
-                    await publisherService.update(publisher._id, publisher);
-
-
-                } else {
-                    await publisherService.create(publisher);
-                }
-
-            } catch (err) {
-                console.error("Lỗi lưu NXB:", err);
-            } finally {
-                this.closeForm();
-                this.fetchPublishers();
-            }
-        },
-        async deletePublisher(id) {
-            try {
-                await publisherService.delete(id);
+                if (publisher._id) await publisherService.update(publisher._id, publisher);
+                else await publisherService.create(publisher);
                 await this.fetchPublishers();
+            } catch (err) { console.error("Lỗi lưu NXB:", err); }
+            finally { this.closeForm(); }
+        },
+        async handleDelete(publisher) {
+            try {
+                await publisherService.delete(publisher._id);
+                await this.fetchPublishers();
+                this.closeForm();
+                Swal.fire({
+                    icon: "success",
+                    title: "Đã xóa!",
+                    timer: 1500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: "top-end",
+                });
             } catch (err) {
-                console.error("Lỗi xóa NXB:", err);
-                alert("❌ Xóa thất bại!");
+                console.error(err);
+                Swal.fire("❌ Lỗi!", "Không thể xóa nhà xuất bản.", "error");
+            }
+        },
+        async confirmDelete(publisher) {
+            const result = await Swal.fire({
+                title: "Bạn có chắc muốn xóa?",
+                text: `NXB: ${publisher.tenNXB}`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xóa",
+                cancelButtonText: "Hủy",
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await publisherService.delete(publisher._id);
+                    await this.fetchPublishers();
+                    Swal.fire({
+                        icon: "success",
+                        title: "Đã xóa!",
+                        timer: 1500,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: "top-end",
+                    });
+                } catch (err) {
+                    console.error("Lỗi xóa NXB:", err);
+                    Swal.fire("❌ Xóa thất bại!", "", "error");
+                }
             }
         },
     },
-
-    mounted() {
-        this.fetchPublishers();
-    },
+    mounted() { this.fetchPublishers(); },
 };
 </script>
 
