@@ -149,9 +149,10 @@ export default {
             const q = this.searchQuery.trim().toLowerCase();
             if (!q) return this.borrows;
             return this.borrows.filter((b) => {
+                const maMuon = b.maMuon;
                 const tenSach = b.bookInfo?.tenSach?.toLowerCase() || "";
                 const docGia = b.docGiaInfo ? (b.docGiaInfo.hoLot + " " + b.docGiaInfo.ten).toLowerCase() : "";
-                return tenSach.includes(q) || docGia.includes(q);
+                return maMuon.includes(q) || tenSach.includes(q) || docGia.includes(q);
             });
         },
         totalPages() {
