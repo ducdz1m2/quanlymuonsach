@@ -147,6 +147,11 @@ export default {
     },
     computed: {
         nextStatus() {
+            // Nếu đang quá hạn => chỉ cho phép chuyển sang "Đã trả"
+            if (this.currentStatus === "Quá hạn") {
+                return ["Đã trả"];
+            }
+
             const order = ["Chờ duyệt", "Đang mượn", "Đã trả"];
             const idx = order.indexOf(this.currentStatus);
             return idx >= 0 && idx < order.length - 1 ? [order[idx + 1]] : [];

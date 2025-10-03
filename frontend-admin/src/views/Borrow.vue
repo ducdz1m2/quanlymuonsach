@@ -170,11 +170,13 @@ export default {
                 case "Sẵn sàng": return "badge bg-secondary";
                 case "Chờ duyệt": return "badge bg-warning text-dark";
                 case "Đã duyệt": return "badge bg-info text-dark";
-                case "Đang mượn": return "badge bg-danger";
+                case "Đang mượn": return "badge bg-primary text-light";
                 case "Đã trả": return "badge bg-success";
+                case "Quá hạn": return "badge bg-danger"; // <--- mới
                 default: return "badge bg-light";
             }
-        },
+        }
+        ,
         async fetchBorrows() {
             this.loading = true;
             try {
@@ -202,11 +204,19 @@ export default {
                     this.showSwal("✅ Thành công", "Thêm phiếu mượn mới!", "success");
                 }
             } catch (err) {
-                console.error(err);
-                // Lấy message từ backend (ApiError.message)
                 const message = err.response?.data?.message || "Không thể lưu phiếu mượn!";
-                this.showSwal("❌ Lỗi", message, "error");
-            } finally {
+                console.log(message)
+                Swal.fire({
+                    icon: "error",
+                    title: "Lỗi",
+                    text: message,
+                    toast: true,
+                    position: "top-end",
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
+            }
+            finally {
                 this.closeForm();
                 this.fetchBorrows();
             }
@@ -237,14 +247,29 @@ export default {
             if (!result.isConfirmed) return;
 
             try {
-                await borrowService.delete(id);
+                const response = await borrowService.delete(id);
                 this.showSwal("🗑️ Đã xóa!", "Phiếu mượn đã được xóa.", "success");
-                this.fetchBorrows();
+
             } catch (err) {
-                console.error(err);
-                this.showSwal("❌ Lỗi", "Xóa thất bại!", "error");
+                console.error("Lỗi khi xóa phiếu mượn:", err);
+
+                const errorMessage =
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Đã xảy ra lỗi khi xóa phiếu mượn.";
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Lỗi",
+                    text: errorMessage,
+                    toast: true,
+                    position: "top-end",
+                });
+            } finally {
+                this.fetchBorrows();
             }
         }
+
         ,
         async openDetailModal(borrow) {
             try {

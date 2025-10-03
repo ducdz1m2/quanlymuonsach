@@ -161,45 +161,78 @@ exports.deleteAll = async (_req, res, next) => {
 exports.calculatePayment = async (req, res, next) => {
   try {
     const borrowService = new BorrowService(MongoDB.client);
+    const readerId = req.params.id;
 
-    // Lấy tất cả phiếu mượn của độc giả
     const borrows = await borrowService.find({
-      docGiaId: new ObjectId(req.params.id),
+      docGiaId: new ObjectId(readerId),
     });
+    const today = new Date();
 
-    let totalCollected = 0; // tiền đã thu (Đã trả)
-    let totalPending = 0; // tiền ước tính (Đang mượn)
+    let totalCollected = 0;
+    let totalPending = 0;
     let countedCollected = 0;
     let countedPending = 0;
 
     for (const b of borrows) {
       const book = await borrowService.bookService.findById(b.bookId);
-      if (!book) continue; // bỏ phiếu mượn sách không tồn tại
+      if (!book) continue;
 
-      // Tính số ngày mượn
-      const ngayMuon = new Date(b.ngayMuon);
-      const ngayTra = new Date(b.ngayTra);
-      const timeDiff = ngayTra - ngayMuon;
-      const days = Math.max(Math.ceil(timeDiff / (1000 * 60 * 60 * 24)), 1);
-
-      const amount = days * (book.donGia || 0);
+      let penalty = 0;
+      let status = b.trangThai;
 
       if (b.trangThai === "Đã trả") {
-        totalCollected += amount;
-        countedCollected += 1;
-      } else if (b.trangThai === "Đang mượn") {
-        totalPending += amount;
-        countedPending += 1;
+        // ✅ Giữ penalty từ DB, không tính lại
+        penalty = b.penalty ?? 0;
+        status = "Đã trả";
+      } else {
+        // Tính penalty tạm cho các trạng thái khác
+        const { penalty: calcPenalty, status: calcStatus } =
+          borrowService.calculatePenalty(b);
+        penalty = calcPenalty;
+        status = calcStatus;
+
+        if (
+          (b.trangThai === "Đang mượn" || b.trangThai === "Chờ duyệt") &&
+          status === "Quá hạn"
+        ) {
+          await borrowService.Borrow.updateOne(
+            { _id: b._id },
+            { $set: { trangThai: status, penalty } }
+          );
+        }
       }
-      // Các trạng thái khác như "Chờ duyệt" bỏ qua
+
+      // Tính tiền thuê sách
+      const ngayMuon = new Date(b.ngayMuon);
+      const ngayTra = new Date(b.ngayTra);
+      const days = Math.max(
+        Math.ceil(
+          (Math.min(today, ngayTra) - ngayMuon) / (1000 * 60 * 60 * 24)
+        ),
+        1
+      );
+      const amount = days * (book.donGia || 0);
+
+      // Cập nhật tổng
+      if (status === "Đã trả") {
+        totalCollected += amount + penalty;
+        countedCollected++;
+      } else {
+        totalPending += amount + penalty;
+        countedPending++;
+      }
+
+      b.trangThai = status;
+      b.penalty = penalty;
     }
 
     return res.send({
-      readerId: req.params.id,
+      readerId,
       totalCollected,
       numberOfCollectedBorrows: countedCollected,
       totalPending,
       numberOfPendingBorrows: countedPending,
+      borrows,
     });
   } catch (error) {
     console.error(error);
