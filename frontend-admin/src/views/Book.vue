@@ -3,11 +3,29 @@
         <h1 class="mb-4">📚 Quản lý sách</h1>
 
         <!-- Thanh công cụ -->
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
             <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm sách hoặc tác giả..."
                 v-model="searchQuery" />
+
+            <!-- Filter -->
+            <select class="form-select w-auto" v-model="selectedCategory">
+                <option value="">📂 Tất cả thể loại</option>
+                <option v-for="c in uniqueCategories" :key="c" :value="c">{{ c }}</option>
+            </select>
+
+            <select class="form-select w-auto" v-model="selectedYear">
+                <option value="">📅 Tất cả năm</option>
+                <option v-for="y in uniqueYears" :key="y" :value="y">{{ y }}</option>
+            </select>
+
+            <select class="form-select w-auto" v-model="selectedPublisher">
+                <option value="">🏢 Tất cả NXB</option>
+                <option v-for="p in uniquePublishers" :key="p" :value="p">{{ p }}</option>
+            </select>
+
             <button class="btn btn-primary" @click="openAddModal">+ Thêm sách</button>
         </div>
+
 
         <!-- Bảng danh sách -->
         <div class="table-responsive">
@@ -97,6 +115,9 @@ export default {
         return {
             books: [],
             searchQuery: "",
+            selectedCategory: "",   // lọc theo thể loại
+            selectedYear: "",       // lọc theo năm xuất bản
+            selectedPublisher: "",  // lọc theo NXB
             loading: false,
             showForm: false,
             editingBook: null,
@@ -105,26 +126,47 @@ export default {
         };
     },
 
+
     computed: {
+        uniqueCategories() {
+            return [...new Set(this.books.map(b => b.theLoai).filter(Boolean))];
+        },
+        uniqueYears() {
+            return [...new Set(this.books.map(b => b.namXuatBan).filter(Boolean))].sort((a, b) => b - a);
+        },
+        uniquePublishers() {
+            return [...new Set(this.books.map(b => b.tenNXB).filter(Boolean))];
+        },
+
         filteredBooks() {
             const q = this.searchQuery.trim().toLowerCase();
-            if (!q) return this.books;
+
             return this.books.filter((b) => {
-                const name = b.tenSach ? b.tenSach.toLowerCase() : "";
-                const author = b.tacGia ? b.tacGia.toLowerCase() : "";
-                const code = b.maSach ? b.maSach.toLowerCase() : "";
-                return name.includes(q) || author.includes(q) || code.includes(q);
+                const name = b.tenSach?.toLowerCase() || "";
+                const author = b.tacGia?.toLowerCase() || "";
+                const code = b.maSach?.toLowerCase() || "";
+
+                // ✅ filter text
+                const matchesSearch = !q || name.includes(q) || author.includes(q) || code.includes(q);
+
+                // ✅ filter theo dropdown
+                const matchesCategory = !this.selectedCategory || b.theLoai === this.selectedCategory;
+                const matchesYear = !this.selectedYear || b.namXuatBan == this.selectedYear;
+                const matchesPublisher = !this.selectedPublisher || b.tenNXB === this.selectedPublisher;
+
+                return matchesSearch && matchesCategory && matchesYear && matchesPublisher;
             });
         },
+
         totalPages() {
             return Math.ceil(this.filteredBooks.length / this.itemsPerPage);
         },
         paginatedBooks() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
-            const end = start + this.itemsPerPage;
-            return this.filteredBooks.slice(start, end);
+            return this.filteredBooks.slice(start, start + this.itemsPerPage);
         },
     },
+
 
     methods: {
         async fetchBooks() {
