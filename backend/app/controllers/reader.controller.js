@@ -122,19 +122,22 @@ exports.delete = async (req, res, next) => {
       return next(new ApiError(404, "Không tìm thấy độc giả."));
     }
 
-    // Kiểm tra xem độc giả có phiếu mượn đang mượn sách không
+    // Kiểm tra tất cả phiếu mượn chưa trả (Đang mượn, Quá hạn, Chờ duyệt)
     const activeBorrows = await borrowService.find({
       docGiaId: new ObjectId(id),
-      trangThai: "Đang mượn", // hoặc trạng thái chưa trả
+      trangThai: { $in: ["Đang mượn", "Quá hạn", "Chờ duyệt"] }, // Kiểm tra nhiều trạng thái
     });
 
     if (activeBorrows.length > 0) {
       return next(
-        new ApiError(400, "Không thể xóa độc giả vì vẫn đang mượn sách.")
+        new ApiError(
+          400,
+          "Không thể xóa độc giả vì vẫn có phiếu mượn chưa trả."
+        )
       );
     }
 
-    // Nếu không có phiếu mượn đang mượn, xóa độc giả
+    // Nếu không có phiếu mượn chưa trả, xóa độc giả
     await readerService.delete(id);
     return res.send({ message: "Xóa độc giả thành công." });
   } catch (error) {
