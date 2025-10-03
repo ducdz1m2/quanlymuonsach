@@ -3,11 +3,25 @@
         <h1 class="mb-4">📖 Quản lý phiếu mượn</h1>
 
         <!-- Thanh công cụ -->
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
             <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm theo tên sách hoặc tên độc giả..."
                 v-model="searchQuery" />
+
+            <!-- Lọc theo trạng thái -->
+            <select class="form-select w-auto" v-model="selectedStatus">
+                <option value="">📌 Tất cả trạng thái</option>
+                <option v-for="s in uniqueStatuses" :key="s" :value="s">{{ s }}</option>
+            </select>
+
+            <!-- Lọc theo năm mượn -->
+            <select class="form-select w-auto" v-model="selectedYear">
+                <option value="">📅 Tất cả năm mượn</option>
+                <option v-for="y in uniqueYears" :key="y" :value="y">{{ y }}</option>
+            </select>
+
             <button class="btn btn-primary" @click="openAddModal">+ Thêm phiếu mượn</button>
         </div>
+
 
         <!-- Bảng danh sách -->
         <div class="table-responsive">
@@ -134,6 +148,10 @@ export default {
         return {
             borrows: [],
             searchQuery: "",
+            selectedStatus: "",   // lọc theo trạng thái
+            selectedYear: "",     // lọc theo năm mượn
+            selectedReader: "",   // lọc theo độc giả (optional)
+
             loading: false,
             showForm: false,
             editingBorrow: null,
@@ -144,26 +162,49 @@ export default {
             showDetailModal: false,
         };
     },
+
     computed: {
+        uniqueStatuses() {
+            return [...new Set(this.borrows.map(b => b.trangThai).filter(Boolean))];
+        },
+        uniqueYears() {
+            return [...new Set(this.borrows.map(b => {
+                if (!b.ngayMuon) return null;
+                return new Date(b.ngayMuon).getFullYear();
+            }).filter(Boolean))].sort((a, b) => b - a);
+        },
+
         filteredBorrows() {
             const q = this.searchQuery.trim().toLowerCase();
-            if (!q) return this.borrows;
+
             return this.borrows.filter((b) => {
-                const maMuon = b.maMuon;
+                const maMuon = b.maMuon || "";
                 const tenSach = b.bookInfo?.tenSach?.toLowerCase() || "";
                 const docGia = b.docGiaInfo ? (b.docGiaInfo.hoLot + " " + b.docGiaInfo.ten).toLowerCase() : "";
-                return maMuon.includes(q) || tenSach.includes(q) || docGia.includes(q);
+
+                // ✅ lọc theo từ khóa
+                const matchesSearch = !q || maMuon.includes(q) || tenSach.includes(q) || docGia.includes(q);
+
+                // ✅ lọc theo trạng thái
+                const matchesStatus = !this.selectedStatus || b.trangThai === this.selectedStatus;
+
+                // ✅ lọc theo năm mượn
+                const borrowYear = b.ngayMuon ? new Date(b.ngayMuon).getFullYear() : null;
+                const matchesYear = !this.selectedYear || borrowYear == this.selectedYear;
+
+                return matchesSearch && matchesStatus && matchesYear;
             });
         },
+
         totalPages() {
             return Math.ceil(this.filteredBorrows.length / this.itemsPerPage);
         },
         paginatedBorrows() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
-            const end = start + this.itemsPerPage;
-            return this.filteredBorrows.slice(start, end);
+            return this.filteredBorrows.slice(start, start + this.itemsPerPage);
         },
     },
+
     methods: {
         statusClass(status) {
             switch (status) {
