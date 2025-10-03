@@ -3,28 +3,61 @@
         <h1 class="mb-4">📚 Quản lý sách</h1>
 
         <!-- Thanh công cụ -->
-        <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
-            <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm sách hoặc tác giả..."
-                v-model="searchQuery" />
+        <!-- Thanh công cụ -->
+        <div class="row g-2 mb-3 align-items-center">
+            <div class="col-auto">
+                <input type="text" class="form-control" placeholder="🔍 Tìm kiếm sách hoặc tác giả..."
+                    v-model="searchQuery" />
+            </div>
 
-            <!-- Filter -->
-            <select class="form-select w-auto" v-model="selectedCategory">
-                <option value="">📂 Tất cả thể loại</option>
-                <option v-for="c in uniqueCategories" :key="c" :value="c">{{ c }}</option>
-            </select>
+            <div class="col-auto">
+                <select class="form-select" v-model="selectedCategory">
+                    <option value="">📂 Tất cả thể loại</option>
+                    <option v-for="c in uniqueCategories" :key="c" :value="c">{{ c }}</option>
+                </select>
+            </div>
 
-            <select class="form-select w-auto" v-model="selectedYear">
-                <option value="">📅 Tất cả năm</option>
-                <option v-for="y in uniqueYears" :key="y" :value="y">{{ y }}</option>
-            </select>
+            <div class="col-auto">
+                <select class="form-select" v-model="selectedYear">
+                    <option value="">📅 Tất cả năm</option>
+                    <option v-for="y in uniqueYears" :key="y" :value="y">{{ y }}</option>
+                </select>
+            </div>
 
-            <select class="form-select w-auto" v-model="selectedPublisher">
-                <option value="">🏢 Tất cả NXB</option>
-                <option v-for="p in uniquePublishers" :key="p" :value="p">{{ p }}</option>
-            </select>
+            <div class="col-auto">
+                <select class="form-select" v-model="selectedPublisher">
+                    <option value="">🏢 Tất cả NXB</option>
+                    <option v-for="p in uniquePublishers" :key="p" :value="p">{{ p }}</option>
+                </select>
+            </div>
 
-            <button class="btn btn-primary" @click="openAddModal">+ Thêm sách</button>
+            <!-- Filter theo đơn giá -->
+            <!-- Sắp xếp theo đơn giá -->
+            <div class="col-auto">
+                <select class="form-select" v-model="sortBy">
+                    <option value="">🔀 Không sắp xếp</option>
+                    <option value="price">💰 Sắp xếp theo đơn giá</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select" v-model="sortOrder" :disabled="!sortBy">
+                    <option value="desc">⬇️ Cao → Thấp</option>
+                    <option value="asc">⬆️ Thấp → Cao</option>
+                </select>
+            </div>
+
+
+            <!-- Nút reset -->
+            <div class="col-auto">
+                <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
+            </div>
+
+            <div class="col-auto">
+                <button class="btn btn-primary" @click="openAddModal">+ Thêm sách</button>
+            </div>
         </div>
+
 
 
         <!-- Bảng danh sách -->
@@ -115,15 +148,34 @@ export default {
         return {
             books: [],
             searchQuery: "",
-            selectedCategory: "",   // lọc theo thể loại
-            selectedYear: "",       // lọc theo năm xuất bản
-            selectedPublisher: "",  // lọc theo NXB
+            selectedCategory: "",
+            selectedYear: "",
+            selectedPublisher: "",
+            sortBy: "",     // "price"
+            sortOrder: "desc", // "asc" | "desc"
             loading: false,
             showForm: false,
             editingBook: null,
             currentPage: 1,
             itemsPerPage: 5,
         };
+    },
+
+
+
+
+    methods: {
+        resetFilters() {
+            this.searchQuery = "";
+            this.selectedCategory = "";
+            this.selectedYear = "";
+            this.selectedPublisher = "";
+            this.sortBy = "";
+            this.sortOrder = "desc";
+            this.currentPage = 1;
+        },
+
+
     },
 
 
@@ -141,21 +193,29 @@ export default {
         filteredBooks() {
             const q = this.searchQuery.trim().toLowerCase();
 
-            return this.books.filter((b) => {
+            let result = this.books.filter((b) => {
                 const name = b.tenSach?.toLowerCase() || "";
                 const author = b.tacGia?.toLowerCase() || "";
                 const code = b.maSach?.toLowerCase() || "";
 
-                // ✅ filter text
                 const matchesSearch = !q || name.includes(q) || author.includes(q) || code.includes(q);
-
-                // ✅ filter theo dropdown
                 const matchesCategory = !this.selectedCategory || b.theLoai === this.selectedCategory;
                 const matchesYear = !this.selectedYear || b.namXuatBan == this.selectedYear;
                 const matchesPublisher = !this.selectedPublisher || b.tenNXB === this.selectedPublisher;
 
                 return matchesSearch && matchesCategory && matchesYear && matchesPublisher;
             });
+
+            // ✅ Sắp xếp theo đơn giá
+            if (this.sortBy === "price") {
+                result.sort((a, b) => {
+                    const valA = a.donGia || 0;
+                    const valB = b.donGia || 0;
+                    return this.sortOrder === "asc" ? valA - valB : valB - valA;
+                });
+            }
+
+            return result;
         },
 
         totalPages() {
@@ -168,7 +228,18 @@ export default {
     },
 
 
+
     methods: {
+        resetFilters() {
+            this.searchQuery = "";
+            this.selectedCategory = "";
+            this.selectedYear = "";
+            this.selectedPublisher = "";
+            this.sortBy = "";       // reset chọn loại sắp xếp
+            this.sortOrder = "desc"; // reset về mặc định
+            this.currentPage = 1;
+        },
+
         async fetchBooks() {
             this.loading = true;
             try {

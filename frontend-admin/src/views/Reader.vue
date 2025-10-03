@@ -3,10 +3,50 @@
         <h1 class="mb-4">📚 Quản lý độc giả</h1>
 
         <!-- Thanh công cụ -->
-        <div class="d-flex justify-content-between mb-3">
-            <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm độc giả..." v-model="searchQuery" />
-            <button class="btn btn-primary" @click="openAddModal">+ Thêm độc giả</button>
+        <div class="row g-2 align-items-center mb-3">
+            <div class="col">
+                <input type="text" class="form-control" placeholder="🔍 Tìm kiếm độc giả..." v-model="searchQuery" />
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select" v-model="selectedGender">
+                    <option value="">👥 Tất cả phái</option>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select" v-model="selectedYear">
+                    <option value="">📅 Tất cả năm sinh</option>
+                    <option v-for="y in uniqueYears" :key="y" :value="y">{{ y }}</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select" v-model="sortBy">
+                    <option value="">🔀 Không sắp xếp</option>
+                    <option value="collected">Sắp xếp theo tiền đã thu</option>
+                    <option value="pending">Sắp xếp theo tiền sắp thu</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select" v-model="sortOrder" :disabled="!sortBy">
+                    <option value="desc">⬇️ Lớn → Bé</option>
+                    <option value="asc">⬆️ Bé → Lớn</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" @click="openAddModal">+ Thêm độc giả</button>
+            </div>
         </div>
+
+
 
         <!-- Bảng danh sách -->
         <div class="table-responsive">
@@ -94,8 +134,16 @@ export default {
         return {
             readers: [],
             searchQuery: "",
-            loading: false,
 
+            // Bộ lọc
+            selectedGender: "",
+            selectedYear: "",
+
+            // Sắp xếp
+            sortBy: "", // "collected" | "pending"
+            sortOrder: "desc", // "asc" hoặc "desc"
+
+            loading: false,
             showForm: false,
             editingReader: null,
 
@@ -104,27 +152,59 @@ export default {
         };
     },
 
+
+
     computed: {
+        uniqueYears() {
+            return [...new Set(
+                this.readers.map(r => {
+                    if (!r.ngaySinh) return null;
+                    return new Date(r.ngaySinh).getFullYear();
+                }).filter(Boolean)
+            )].sort((a, b) => b - a);
+        },
+
         filteredReaders() {
             const q = this.searchQuery.trim().toLowerCase();
-            if (!q) return this.readers;
 
-            return this.readers.filter((r) => {
+            let result = this.readers.filter((r) => {
+                const maDG = r.maDG?.toLowerCase() || "";
+                const hoLot = r.hoLot?.toLowerCase() || "";
+                const ten = r.ten?.toLowerCase() || "";
+                const diaChi = r.diaChi?.toLowerCase() || "";
+                const dienThoai = r.dienThoai?.toLowerCase() || "";
 
-                const maDG = r.maDG ? r.maDG.toLowerCase() : "";
-                const hoLot = r.hoLot ? r.hoLot.toLowerCase() : "";
-                const ten = r.ten ? r.ten.toLowerCase() : "";
-                const diaChi = r.diaChi ? r.diaChi.toLowerCase() : "";
-                const dienThoai = r.dienThoai ? r.dienThoai.toLowerCase() : "";
-
-                return (
+                // Tìm kiếm
+                const matchesSearch =
+                    !q ||
                     maDG.includes(q) ||
                     hoLot.includes(q) ||
                     ten.includes(q) ||
                     diaChi.includes(q) ||
-                    dienThoai.includes(q)
-                );
+                    dienThoai.includes(q);
+
+                // Lọc phái
+                const matchesGender = !this.selectedGender || r.phai === this.selectedGender;
+
+                // Lọc năm sinh
+                const year = r.ngaySinh ? new Date(r.ngaySinh).getFullYear() : null;
+                const matchesYear = !this.selectedYear || year == this.selectedYear;
+
+                return matchesSearch && matchesGender && matchesYear;
             });
+
+            // Sắp xếp
+            if (this.sortBy) {
+                result = result.sort((a, b) => {
+                    const field = this.sortBy === "collected" ? "totalCollected" : "totalPending";
+                    const valA = a[field] || 0;
+                    const valB = b[field] || 0;
+
+                    return this.sortOrder === "asc" ? valA - valB : valB - valA;
+                });
+            }
+
+            return result;
         },
 
         totalPages() {
@@ -133,12 +213,21 @@ export default {
 
         paginatedReaders() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
-            const end = start + this.itemsPerPage;
-            return this.filteredReaders.slice(start, end);
+            return this.filteredReaders.slice(start, start + this.itemsPerPage);
         },
     },
 
+
+
     methods: {
+        resetFilters() {
+            this.searchQuery = "";
+            this.selectedGender = "";
+            this.selectedYear = "";
+            this.sortBy = "";
+            this.sortOrder = "desc";
+            this.currentPage = 1;
+        },
         async fetchReaders() {
             this.loading = true;
             try {

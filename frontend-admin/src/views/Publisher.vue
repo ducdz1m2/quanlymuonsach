@@ -12,10 +12,12 @@
                 <option v-for="c in uniqueCities" :key="c" :value="c">{{ c }}</option>
             </select>
 
-
+            <!-- Nút reset -->
+            <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
 
             <button class="btn btn-primary" @click="openAddModal">+ Thêm NXB</button>
         </div>
+
 
 
         <div class="table-responsive">
@@ -128,6 +130,12 @@ export default {
     },
 
     methods: {
+        resetFilters() {
+            this.searchQuery = "";
+            this.selectedCity = "";
+            this.currentPage = 1;
+        },
+
         async fetchPublishers() {
             this.loading = true;
             try { this.publishers = await publisherService.getAll(); }
