@@ -19,8 +19,12 @@
                 <option v-for="y in uniqueYears" :key="y" :value="y">{{ y }}</option>
             </select>
 
+            <!-- 🔄 Nút reset -->
+            <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
+
             <button class="btn btn-primary" @click="openAddModal">+ Thêm phiếu mượn</button>
         </div>
+
 
 
         <!-- Bảng danh sách -->
@@ -206,6 +210,13 @@ export default {
     },
 
     methods: {
+        resetFilters() {
+            this.searchQuery = "";
+            this.selectedStatus = "";
+            this.selectedYear = "";
+            this.currentPage = 1;
+        },
+
         statusClass(status) {
             switch (status) {
                 case "Sẵn sàng": return "badge bg-secondary";
