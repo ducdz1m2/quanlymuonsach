@@ -3,10 +3,37 @@
         <h1 class="mb-4">👨‍💼 Quản lý nhân viên</h1>
 
         <!-- Thanh công cụ -->
-        <div class="d-flex justify-content-between mb-3">
+        <!-- Thanh công cụ -->
+        <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
             <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm nhân viên..." v-model="searchQuery" />
+
+            <!-- Lọc theo chức vụ -->
+            <select class="form-select w-auto" v-model="selectedPosition">
+                <option value="">📌 Tất cả chức vụ</option>
+                <option v-for="p in uniquePositions" :key="p" :value="p">{{ p }}</option>
+            </select>
+
+            <!-- Lọc theo giới tính -->
+            <select class="form-select w-auto" v-model="selectedGender">
+                <option value="">👥 Tất cả phái</option>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+                <option value="Không rõ">Không rõ</option>
+
+            </select>
+
+            <!-- Lọc theo năm sinh -->
+            <select class="form-select w-auto" v-model="selectedYear">
+                <option value="">📅 Tất cả năm sinh</option>
+                <option v-for="y in uniqueYears" :key="y" :value="y">{{ y }}</option>
+            </select>
+
+            <!-- 🔄 Nút reset -->
+            <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
+
             <button class="btn btn-primary" @click="openAddModal">+ Thêm nhân viên</button>
         </div>
+
 
         <!-- Bảng danh sách -->
         <div class="table-responsive">
@@ -83,6 +110,9 @@ export default {
         return {
             staffs: [],
             searchQuery: "",
+            selectedPosition: "",
+            selectedGender: "",
+            selectedYear: "",
             loading: false,
 
             showForm: false,
@@ -94,37 +124,55 @@ export default {
     },
 
     computed: {
+        uniquePositions() {
+            return [...new Set(this.staffs.map(s => s.chucVu).filter(Boolean))];
+        },
+        uniqueYears() {
+            return [...new Set(this.staffs
+                .map(s => s.ngaySinh ? new Date(s.ngaySinh).getFullYear() : null)
+                .filter(Boolean)
+            )].sort((a, b) => b - a); // năm mới trước
+        },
+
         filteredStaffs() {
             const q = this.searchQuery.trim().toLowerCase();
-            if (!q) return this.staffs;
+            return this.staffs.filter(s => {
+                const ma = s.maNV?.toLowerCase() || "";
+                const name = s.hoTenNV?.toLowerCase() || "";
+                const position = s.chucVu?.toLowerCase() || "";
+                const email = s.email?.toLowerCase() || "";
+                const phone = s.soDienThoai?.toLowerCase() || "";
+                const address = s.diaChi?.toLowerCase() || "";
+                const gender = s.phai || "";
+                const birthYear = s.ngaySinh ? new Date(s.ngaySinh).getFullYear() : "";
 
-            return this.staffs.filter(b => {
-                const ma = b.maNV ? b.maNV.toLowerCase() : "";
-                const name = b.hoTenNV ? b.hoTenNV.toLowerCase() : "";
-                const position = b.chucVu ? b.chucVu.toLowerCase() : "";
-                const email = b.email ? b.email.toLowerCase() : "";
-                const phone = b.soDienThoai ? b.soDienThoai.toLowerCase() : "";
-                const address = b.diaChi ? b.diaChi.toLowerCase() : "";
+                const matchesSearch = !q || ma.includes(q) || name.includes(q) ||
+                    position.includes(q) || email.includes(q) ||
+                    phone.includes(q) || address.includes(q);
 
-                return (
-                    ma.includes(q) ||
-                    name.includes(q) ||
-                    position.includes(q) ||
-                    email.includes(q) ||
-                    phone.includes(q) ||
-                    address.includes(q)
-                );
+                const matchesPosition = !this.selectedPosition || s.chucVu === this.selectedPosition;
+                const matchesGender = !this.selectedGender || gender === this.selectedGender;
+                const matchesYear = !this.selectedYear || birthYear == this.selectedYear;
+
+                return matchesSearch && matchesPosition && matchesGender && matchesYear;
             });
         },
+
         totalPages() { return Math.ceil(this.filteredStaffs.length / this.itemsPerPage); },
         paginatedStaffs() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
-            const end = start + this.itemsPerPage;
-            return this.filteredStaffs.slice(start, end);
+            return this.filteredStaffs.slice(start, start + this.itemsPerPage);
         },
     },
 
     methods: {
+        resetFilters() {
+            this.searchQuery = "";
+            this.selectedPosition = "";
+            this.selectedGender = "";
+            this.selectedYear = "";
+            this.currentPage = 1;
+        },
         async fetchStaffs() {
             this.loading = true;
             try { this.staffs = await staffService.getAll(); }

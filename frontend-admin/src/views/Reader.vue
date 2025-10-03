@@ -13,6 +13,7 @@
                     <option value="">👥 Tất cả phái</option>
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
+                    <option value="Không rõ">Không rõ</option>
                 </select>
             </div>
 
