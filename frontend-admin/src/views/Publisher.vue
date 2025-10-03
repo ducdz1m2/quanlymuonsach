@@ -2,11 +2,21 @@
     <div class="p-4">
         <h1 class="mb-4">👨‍💼 Quản lý Nhà xuất bản</h1>
 
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
             <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm nhà xuất bản..."
                 v-model="searchQuery" />
-            <button class="btn btn-primary" @click="openAddModal">+ Thêm nhà xuất bản</button>
+
+            <!-- Lọc theo địa chỉ -->
+            <select class="form-select w-auto" v-model="selectedCity">
+                <option value="">🏙️ Tất cả địa chỉ</option>
+                <option v-for="c in uniqueCities" :key="c" :value="c">{{ c }}</option>
+            </select>
+
+
+
+            <button class="btn btn-primary" @click="openAddModal">+ Thêm NXB</button>
         </div>
+
 
         <div class="table-responsive">
             <table class="table table-bordered table-hover text-center align-middle">
@@ -71,6 +81,9 @@ export default {
         return {
             publishers: [],
             searchQuery: "",
+            selectedCity: "",   // lọc theo địa chỉ (tỉnh/thành phố)
+
+
             loading: false,
             showForm: false,
             editingPublisher: null,
@@ -78,22 +91,42 @@ export default {
             itemsPerPage: 5,
         };
     },
+
     computed: {
+        uniqueCities() {
+            return [...new Set(this.publishers.map(p => p.diaChi).filter(Boolean))];
+        },
+
         filteredPublishers() {
             const q = this.searchQuery.trim().toLowerCase();
-            if (!q) return this.publishers;
-            return this.publishers.filter(p =>
-                (p.maNXB?.toLowerCase().includes(q)) ||
-                (p.tenNXB?.toLowerCase().includes(q)) ||
-                (p.diaChi?.toLowerCase().includes(q))
-            );
+
+            return this.publishers.filter((p) => {
+                const code = p.maNXB?.toLowerCase() || "";
+                const name = p.tenNXB?.toLowerCase() || "";
+                const address = p.diaChi?.toLowerCase() || "";
+
+                // ✅ lọc theo search
+                const matchesSearch = !q || code.includes(q) || name.includes(q) || address.includes(q);
+
+                // ✅ lọc theo địa chỉ
+                const matchesCity = !this.selectedCity || p.diaChi === this.selectedCity;
+
+                // ✅ lọc theo tình trạng ảnh
+
+
+                return matchesSearch && matchesCity;
+            });
         },
-        totalPages() { return Math.ceil(this.filteredPublishers.length / this.itemsPerPage); },
+
+        totalPages() {
+            return Math.ceil(this.filteredPublishers.length / this.itemsPerPage);
+        },
         paginatedPublishers() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
             return this.filteredPublishers.slice(start, start + this.itemsPerPage);
         },
     },
+
     methods: {
         async fetchPublishers() {
             this.loading = true;
