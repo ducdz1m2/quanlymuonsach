@@ -26,10 +26,12 @@ class BookService {
 
   async create(payload) {
     const book = this.extractBookData(payload);
+    book.createdAt = new Date(); // <--- thêm dòng này
+
     const result = await this.Book.findOneAndUpdate(
-      book, // filter
-      { $set: book }, // update
-      { returnDocument: "after", upsert: true } // options
+      book,
+      { $set: book },
+      { returnDocument: "after", upsert: true }
     );
     return result.value;
   }

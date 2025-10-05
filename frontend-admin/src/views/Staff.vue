@@ -3,7 +3,6 @@
         <h1 class="mb-4">👨‍💼 Quản lý nhân viên</h1>
 
         <!-- Thanh công cụ -->
-        <!-- Thanh công cụ -->
         <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
             <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm nhân viên..." v-model="searchQuery" />
 

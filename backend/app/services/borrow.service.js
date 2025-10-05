@@ -263,6 +263,7 @@ class BorrowService {
   }
 
   // Lấy danh sách chi tiết phiếu mượn
+  // Lấy danh sách chi tiết phiếu mượn (có tính tiền)
   async findAllDetails() {
     await this.markOverdueBorrows(); // cập nhật quá hạn trước khi lấy
 
@@ -287,7 +288,59 @@ class BorrowService {
       { $unwind: "$docGiaInfo" },
     ]);
 
-    return await cursor.toArray();
+    const results = await cursor.toArray();
+    const today = new Date();
+
+    // ✅ Tính tiền và cập nhật penalty nếu cần
+    for (const b of results) {
+      const book = b.bookInfo;
+      if (!book) continue;
+
+      let penalty = b.penalty ?? 0;
+      let status = b.trangThai;
+
+      if (b.trangThai === "Đã trả") {
+        // Giữ penalty đã lưu
+        penalty = b.penalty ?? 0;
+      } else {
+        // Tính lại nếu chưa trả
+        const { penalty: calcPenalty, status: calcStatus } =
+          this.calculatePenalty(b);
+        penalty = calcPenalty;
+        status = calcStatus;
+
+        // Nếu trạng thái cần cập nhật (ví dụ chuyển sang Quá hạn)
+        if (
+          (b.trangThai === "Đang mượn" || b.trangThai === "Chờ duyệt") &&
+          status === "Quá hạn"
+        ) {
+          await this.Borrow.updateOne(
+            { _id: b._id },
+            { $set: { trangThai: status, penalty } }
+          );
+        }
+      }
+
+      // ✅ Tính tiền thuê sách (theo số ngày mượn)
+      const ngayMuon = new Date(b.ngayMuon);
+      const ngayTra = new Date(b.ngayTra);
+      const days = Math.max(
+        Math.ceil(
+          (Math.min(today, ngayTra) - ngayMuon) / (1000 * 60 * 60 * 24)
+        ),
+        1
+      );
+      const rentalFee = days * (book.donGia || 0);
+      const totalPayment = rentalFee + penalty;
+
+      // ✅ Gán vào object kết quả
+      b.trangThai = status;
+      b.penalty = penalty;
+      b.rentalFee = rentalFee;
+      b.totalPayment = totalPayment;
+    }
+
+    return results;
   }
 
   // Đếm phiếu mượn đang mượn của độc giả

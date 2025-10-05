@@ -38,6 +38,7 @@
                         <th>Ngày mượn</th>
                         <th>Ngày trả</th>
                         <th>Trạng thái</th>
+                        <th>Tổng tiền</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -56,6 +57,9 @@
                             <span :class="statusClass(borrow.trangThai)">
                                 {{ borrow.trangThai }}
                             </span>
+                        </td>
+                        <td>
+                            {{ borrow.totalPayment != null ? borrow.totalPayment.toLocaleString() + ' ₫' : '-' }}
                         </td>
                         <td>
                             <button class="btn btn-sm btn-warning me-2" @click.stop="openEditModal(borrow)">Sửa</button>

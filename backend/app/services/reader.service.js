@@ -51,6 +51,8 @@ class ReaderService {
 
   async create(payload) {
     const reader = await this.extractReaderData(payload);
+    reader.createdAt = new Date(); // <--- thêm dòng này
+
     const result = await this.Reader.findOneAndUpdate(
       { hoLot: reader.hoLot, ten: reader.ten, ngaySinh: reader.ngaySinh },
       { $set: reader },
