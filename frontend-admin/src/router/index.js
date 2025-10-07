@@ -6,11 +6,20 @@ import Staff from "@/views/Staff.vue";
 import Publisher from "@/views/Publisher.vue";
 import Reader from "@/views/Reader.vue";
 import Borrow from "@/views/Borrow.vue";
+import StaffLogin from "@/views/StaffLogin.vue";
+
 const routes = [
+  {
+    path: "/staff/login",
+    name: "staff-login",
+    component: StaffLogin,
+    meta: { requiresAuth: false },
+  },
   {
     path: "/",
     name: "dashboard",
     component: Dashboard,
+    meta: { requiresAuth: true },
   },
   {
     path: "/books",
@@ -19,6 +28,7 @@ const routes = [
         path: "",
         name: "books",
         component: Book,
+        meta: { requiresAuth: true },
       },
     ],
   },
@@ -29,6 +39,7 @@ const routes = [
         path: "",
         name: "staffs",
         component: Staff,
+        meta: { requiresAuth: true },
       },
     ],
   },
@@ -39,6 +50,7 @@ const routes = [
         path: "",
         name: "publishers",
         component: Publisher,
+        meta: { requiresAuth: true },
       },
     ],
   },
@@ -49,6 +61,7 @@ const routes = [
         path: "",
         name: "readers",
         component: Reader,
+        meta: { requiresAuth: true },
       },
     ],
   },
@@ -59,6 +72,7 @@ const routes = [
         path: "",
         name: "borrows",
         component: Borrow,
+        meta: { requiresAuth: true },
       },
     ],
   },
@@ -72,6 +86,19 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+});
+
+// ✅ Kiểm tra đăng nhập trước khi truy cập
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = !!localStorage.getItem("staffToken");
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next({ name: "staff-login" });
+  } else if (to.name === "staff-login" && isAuthenticated) {
+    next({ name: "dashboard" });
+  } else {
+    next();
+  }
 });
 
 export default router;

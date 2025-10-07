@@ -22,6 +22,14 @@ const menuItems = [
 ];
 
 const helpSteps = menuItems.filter(i => i.route !== null);
+function handleMenuClick(item, index) {
+    activeIndex.value = index;
+    if (item.route) {
+        router.push(item.route);
+    } else if (item.text === "Trợ giúp") {
+        showHelp.value = true;
+    }
+}
 
 function toggleSidebar() {
     isCollapsed.value = !isCollapsed.value;
@@ -74,16 +82,12 @@ function closeHelp() {
 
         <ul class="list-unstyled mt-3">
             <li v-for="(item, index) in menuItems" :key="index" class="px-3 py-2 d-flex align-items-center menu-item"
-                :class="{ 'active': activeIndex === index }" @click="item.route && setActive(index, item.route)">
+                :class="{ 'active': activeIndex === index }" @click="handleMenuClick(item, index)">
 
                 <i :class="item.icon"></i>
                 <span v-if="!isCollapsed" class="ms-2">{{ item.text }}</span>
-
-                <!-- Nếu là menu Trợ giúp -->
-                <button v-if="item.route === null" class="btn btn-sm btn-light ms-auto" @click.stop="showHelp = true">
-                    Help
-                </button>
             </li>
+
 
         </ul>
     </div>

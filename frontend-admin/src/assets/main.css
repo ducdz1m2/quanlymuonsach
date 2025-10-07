@@ -1,0 +1,10 @@
+.swal2-container {
+  z-index: 10000 !important;
+}
+
+.vue-datepicker-popup,
+.select-dropdown,
+.tooltip,
+.popover {
+  z-index: 10000 !important;
+}

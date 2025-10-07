@@ -78,7 +78,7 @@ class StaffService {
   async update(id, payload) {
     if (!ObjectId.isValid(id)) return null;
     const filter = { _id: new ObjectId(id) };
-    const update = this.extractStaffData(payload);
+    const update = await this.extractStaffData(payload);
     const result = await this.Staff.findOneAndUpdate(
       filter,
       { $set: update },
@@ -98,6 +98,17 @@ class StaffService {
   async deleteAll() {
     const result = await this.Staff.deleteMany({});
     return result.deletedCount;
+  }
+  async login(email, password) {
+    const staff = await this.Staff.findOne({ email });
+    if (!staff) return null;
+
+    const isValid = await bcrypt.compare(password, staff.password);
+    if (!isValid) return null;
+
+    // Xóa mật khẩu trước khi trả về
+    delete staff.password;
+    return staff;
   }
 }
 

@@ -1,38 +1,82 @@
 <template>
     <nav class="py-3 ms-2 row text-center">
-        <!-- Logo -->
         <div class="col-8 d-flex align-items-center">
             📚 Library Manager
-
         </div>
 
-        <div class="col-4 d-flex flex-row justify-content-end">
+        <div class="col-4 d-flex flex-row justify-content-end align-items-center">
+            <NotificationBell v-if="isLoggedIn" />
 
-            <NotificationBell />
-
-
-            <Avatar class="mx-3" src="https://i.pravatar.cc/100" name="Nguyễn Văn A" size="sm" />
+            <!-- Hiển thị avatar thật của nhân viên -->
+            <Avatar v-if="isLoggedIn && staffInfo" class="mx-3" :src="staffInfo.anh || 'https://i.pravatar.cc/100'"
+                :name="staffInfo.hoTenNV || 'Người dùng'" size="sm" @view-profile="goToProfile"
+                @logout="handleLogout" />
         </div>
-
     </nav>
 </template>
 
 <script>
-
-import { ref } from 'vue';
-import NotificationBell from './NotificationBell.vue';
-import Avatar from './Avatar.vue';
-
+import NotificationBell from "./NotificationBell.vue";
+import Avatar from "./Avatar.vue";
 
 export default {
-    components: {
-        NotificationBell, Avatar
+    components: { NotificationBell, Avatar },
+    props: {
+        staff: {
+            type: Object,
+            default: () => ({})
+        }
     },
-}
-</script>
+    data() {
+        return {
+            isLoggedIn: false,
+        };
+    },
 
-<style scoped>
-nav {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-</style>
+    watch: {
+        staff: {
+            handler(newVal) {
+                // Khi App.vue cập nhật staff, Header tự nhận thay đổi
+                if (newVal && Object.keys(newVal).length > 0) {
+                    this.isLoggedIn = true;
+                    this.staffInfo = newVal;
+                }
+            },
+            deep: true,
+            immediate: true,
+        },
+    },
+
+    methods: {
+        checkLoginStatus() {
+            const token = localStorage.getItem("staffToken");
+            this.isLoggedIn = !!token;
+
+            if (this.isLoggedIn) {
+                const info = JSON.parse(localStorage.getItem("staffInfo") || "{}");
+                this.staffInfo = info && Object.keys(info).length ? info : null;
+            } else {
+                this.staffInfo = null;
+            }
+        },
+
+        goToProfile() {
+            if (this.staffInfo) {
+
+                this.$emit("open-profile", this.staffInfo);
+
+            }
+        },
+
+        handleLogout() {
+            localStorage.removeItem("staffToken");
+            localStorage.removeItem("staffInfo");
+            this.isLoggedIn = false;
+            this.staffInfo = null;
+            window.dispatchEvent(new Event("storage"));
+            this.$router.push("/staff/login");
+        },
+    },
+
+};
+</script>

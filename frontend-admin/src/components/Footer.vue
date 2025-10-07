@@ -1,9 +1,9 @@
 <template>
     <footer class="bg-dark text-white text-center py-3 mt-auto">
         <div class="container">
-            <p class="mb-1">&copy; 2025 Library Manager</p>
+            <p class="mb-1">&copy; Quản lý mượn sách</p>
             <p class="small mb-0">
-                Made with ❤️ using Vue 3 & Bootstrap 5
+                B2205935 Lê Ngọc Đức
             </p>
         </div>
     </footer>
