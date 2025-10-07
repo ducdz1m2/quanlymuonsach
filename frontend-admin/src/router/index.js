@@ -19,62 +19,55 @@ const routes = [
     path: "/",
     name: "dashboard",
     component: Dashboard,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      allowedRoles: ["Admin", "Thủ thư"], // chỉ Admin & Thủ thư
+    },
   },
   {
     path: "/books",
-    children: [
-      {
-        path: "",
-        name: "books",
-        component: Book,
-        meta: { requiresAuth: true },
-      },
-    ],
+    name: "books",
+    component: Book,
+    meta: {
+      requiresAuth: true,
+      allowedRoles: ["Admin", "Thủ thư"],
+    },
   },
   {
     path: "/staffs",
-    children: [
-      {
-        path: "",
-        name: "staffs",
-        component: Staff,
-        meta: { requiresAuth: true },
-      },
-    ],
+    name: "staffs",
+    component: Staff,
+    meta: {
+      requiresAuth: true,
+      allowedRoles: ["Admin", "Quản lý nhân sự"],
+    },
   },
   {
     path: "/publishers",
-    children: [
-      {
-        path: "",
-        name: "publishers",
-        component: Publisher,
-        meta: { requiresAuth: true },
-      },
-    ],
+    name: "publishers",
+    component: Publisher,
+    meta: {
+      requiresAuth: true,
+      allowedRoles: ["Admin"], // chỉ Admin
+    },
   },
   {
     path: "/readers",
-    children: [
-      {
-        path: "",
-        name: "readers",
-        component: Reader,
-        meta: { requiresAuth: true },
-      },
-    ],
+    name: "readers",
+    component: Reader,
+    meta: {
+      requiresAuth: true,
+      allowedRoles: ["Admin", "Thủ thư"], // chỉ Admin
+    },
   },
   {
     path: "/borrows",
-    children: [
-      {
-        path: "",
-        name: "borrows",
-        component: Borrow,
-        meta: { requiresAuth: true },
-      },
-    ],
+    name: "borrows",
+    component: Borrow,
+    meta: {
+      requiresAuth: true,
+      allowedRoles: ["Admin", "Thủ thư", "Nhân viên kiểm duyệt"],
+    },
   },
   {
     path: "/:pathMatch(.*)*",
@@ -88,17 +81,27 @@ const router = createRouter({
   routes,
 });
 
-// ✅ Kiểm tra đăng nhập trước khi truy cập
+// ✅ Middleware kiểm tra đăng nhập và quyền
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem("staffToken");
+  const token = localStorage.getItem("staffToken");
+  const staffInfo = JSON.parse(localStorage.getItem("staffInfo") || "{}");
+  const role = staffInfo.chucVu; // ✅ lấy từ DB
+  const isAuthenticated = !!token;
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: "staff-login" });
-  } else if (to.name === "staff-login" && isAuthenticated) {
-    next({ name: "dashboard" });
-  } else {
-    next();
+    return next({ name: "staff-login" });
   }
+
+  if (to.name === "staff-login" && isAuthenticated) {
+    return next({ name: "dashboard" });
+  }
+
+  if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(role)) {
+    alert("🚫 Bạn không có quyền truy cập trang này!");
+    return next({ name: "dashboard" });
+  }
+
+  next();
 });
 
 export default router;

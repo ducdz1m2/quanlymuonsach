@@ -53,12 +53,13 @@ export default {
     },
     async handleSaveProfile(updatedStaff) {
       try {
-        await staffService.update(updatedStaff._id, updatedStaff);
-        localStorage.setItem("staffInfo", JSON.stringify(updatedStaff));
+        // ✅ Tạo bản sao không có mật khẩu
+        const { matKhau, password, ...safeData } = updatedStaff;
 
-        // ✅ Gọi lại fetchStaff để đồng bộ với DB
+        await staffService.update(updatedStaff._id, safeData);
+        localStorage.setItem("staffInfo", JSON.stringify(safeData));
+
         await this.fetchStaff();
-
         this.showProfileModal = false;
       } catch (err) {
         console.error("❌ Lỗi khi lưu hồ sơ:", err);

@@ -30,7 +30,17 @@ export default {
     data() {
         return {
             isLoggedIn: false,
+            staffInfo: null, // thêm staffInfo reactive
         };
+    },
+    mounted() {
+        this.checkLoginStatus();
+
+        // Lắng nghe event khi login hoặc logout
+        window.addEventListener("storage", this.checkLoginStatus);
+    },
+    beforeUnmount() {
+        window.removeEventListener("storage", this.checkLoginStatus);
     },
 
     watch: {
