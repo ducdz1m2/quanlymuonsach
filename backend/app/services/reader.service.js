@@ -1,5 +1,5 @@
 const { ObjectId } = require("mongodb");
-
+const bcrypt = require("bcrypt");
 class ReaderService {
   constructor(client) {
     this.Reader = client.db().collection("reader");
@@ -17,6 +17,9 @@ class ReaderService {
       maDG,
       hoLot: payload.hoLot,
       ten: payload.ten,
+      password: payload.password
+        ? bcrypt.hashSync(payload.password, 10)
+        : undefined,
       ngaySinh: payload.ngaySinh,
       phai: payload.phai,
       diaChi: payload.diaChi,
@@ -95,6 +98,16 @@ class ReaderService {
   async deleteAll() {
     const result = await this.Reader.deleteMany({});
     return result.deletedCount;
+  }
+
+  async login(dienThoai, password) {
+    const reader = await this.Reader.findOne({ dienThoai });
+    if (!reader) return null;
+
+    const isValid = await bcrypt.compare(password, reader.password);
+    if (!isValid) return null;
+    delete reader.password;
+    return reader;
   }
 }
 

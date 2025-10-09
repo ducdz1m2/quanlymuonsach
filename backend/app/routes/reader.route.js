@@ -3,6 +3,7 @@ const readers = require("../controllers/reader.controller");
 
 const router = express.Router();
 
+router.route("/login").post(readers.login);
 router
   .route("/")
   .post(readers.create)

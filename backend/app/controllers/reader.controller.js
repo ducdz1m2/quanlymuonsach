@@ -3,6 +3,9 @@ const ApiError = require("../api-error");
 const ReaderService = require("../services/reader.service");
 const BorrowService = require("../services/borrow.service");
 const MongoDB = require("../utils/mongodb.util");
+const jwt = require("jsonwebtoken");
+const SECRET_KEY = process.env.JWT_SECRET || "library_secret";
+
 exports.create = async (req, res, next) => {
   if (!req.body?.hoLot || !req.body?.ten) {
     return next(new ApiError(400, "Tên độc giả không thể để trống."));
@@ -245,5 +248,32 @@ exports.calculatePayment = async (req, res, next) => {
         `Đã xảy ra lỗi khi tính tiền cho độc giả ${req.params.id}`
       )
     );
+  }
+};
+exports.login = async (req, res, next) => {
+  const { dienThoai, password } = req.body;
+  const readerService = new ReaderService(MongoDB.client);
+
+  try {
+    const reader = await readerService.login(dienThoai, password); // ✅ thêm await
+
+    if (!reader) {
+      return res
+        .status(401)
+        .json({ message: "Số điện thoại hoặc mật khẩu không đúng." });
+    }
+
+    const token = jwt.sign({ id: reader._id, role: "reader" }, SECRET_KEY, {
+      expiresIn: "1d",
+    });
+
+    return res.json({
+      message: "Đăng nhập thành công",
+      reader,
+      token,
+    });
+  } catch (error) {
+    console.error(error);
+    return next(new ApiError(500, "Đã xảy ra lỗi khi đăng nhập độc giả."));
   }
 };
