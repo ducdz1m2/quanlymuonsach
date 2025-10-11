@@ -17,6 +17,7 @@
     "@vuelidate/validators": "^2.0.4",
     "axios": "^1.12.2",
     "bootstrap": "^5.3.8",
+    "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.25.0",
     "vue": "^3.5.22",
     "vue-router": "^4.5.1",

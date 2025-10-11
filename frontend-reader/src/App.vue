@@ -42,8 +42,10 @@ export default {
 
     this.fetchReader();
 
+
   },
   methods: {
+
     openProfile(readerInfo) {
       // Khi Header emit ra sự kiện open-profile
       this.selectedReader = { ...readerInfo };

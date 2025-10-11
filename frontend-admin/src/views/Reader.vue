@@ -47,8 +47,6 @@
             </div>
         </div>
 
-
-
         <!-- Bảng danh sách -->
         <div class="table-responsive">
             <table class="table table-bordered table-hover text-center align-middle">
@@ -61,17 +59,14 @@
                         <th>Phái</th>
                         <th>Địa chỉ</th>
                         <th>Điện thoại</th>
-
                         <th>Tiền đã thu (VND)</th>
                         <th>Tiền sắp thu (VND)</th>
-
                         <th>Ảnh</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="reader in paginatedReaders" :key="reader._id">
-
                         <td class="text-start">{{ reader.maDG }}</td>
                         <td class="text-start">{{ reader.hoLot }}</td>
                         <td class="text-start">{{ reader.ten }}</td>
@@ -79,13 +74,10 @@
                         <td>{{ reader.phai }}</td>
                         <td class="text-start">{{ reader.diaChi }}</td>
                         <td>{{ reader.dienThoai }}</td>
-
                         <td class="text-success">{{ reader.totalCollected != null ?
-                            reader.totalCollected.toLocaleString() + ' ₫' : '-' }}
-                        </td>
+                            reader.totalCollected.toLocaleString() + ' ₫' : '-' }}</td>
                         <td class="text-warning">{{ reader.totalPending != null ? reader.totalPending.toLocaleString() +
                             ' ₫' : '-' }}</td>
-
                         <td>
                             <img :src="reader.anh || '/images/default-reader.png'" width="60" height="80"
                                 class="rounded shadow-sm" />
@@ -93,13 +85,17 @@
                         <td>
                             <button class="btn btn-sm btn-warning me-2" @click="openEditModal(reader)">Sửa</button>
                             <button class="btn btn-sm btn-danger" @click="confirmDelete(reader)">Xóa</button>
+
+                            <button class="btn btn-sm btn-secondary" @click="openChat(reader)">💬 Chat</button>
+
                         </td>
                     </tr>
+
                     <tr v-if="!loading && paginatedReaders.length === 0">
-                        <td colspan="8">Không có độc giả phù hợp</td>
+                        <td colspan="11">Không có độc giả phù hợp</td>
                     </tr>
                     <tr v-if="loading">
-                        <td colspan="8">⏳ Đang tải dữ liệu...</td>
+                        <td colspan="11">⏳ Đang tải dữ liệu...</td>
                     </tr>
                 </tbody>
             </table>
@@ -121,39 +117,39 @@
             </div>
         </div>
     </div>
+    <ChatBox v-if="showChat" :target="selectedReader" :sender="sender" @close="closeChat" />
+
 </template>
 
 <script>
 import ReaderForm from "@/components/readers/ReaderForm.vue";
 import readerService from "@/services/reader.service";
+import ChatBox from "@/components/ChatBox.vue";
+
 import Swal from "sweetalert2";
 
 export default {
-    components: { ReaderForm },
+    components: { ReaderForm, ChatBox },
 
     data() {
         return {
+            showChat: false,
+            selectedReader: null,
+            sender: null,
+
             readers: [],
             searchQuery: "",
-
-            // Bộ lọc
             selectedGender: "",
             selectedYear: "",
-
-            // Sắp xếp
-            sortBy: "", // "collected" | "pending"
-            sortOrder: "desc", // "asc" hoặc "desc"
-
+            sortBy: "",
+            sortOrder: "desc",
             loading: false,
             showForm: false,
             editingReader: null,
-
             currentPage: 1,
             itemsPerPage: 5,
         };
     },
-
-
 
     computed: {
         uniqueYears() {
@@ -175,7 +171,6 @@ export default {
                 const diaChi = r.diaChi?.toLowerCase() || "";
                 const dienThoai = r.dienThoai?.toLowerCase() || "";
 
-                // Tìm kiếm
                 const matchesSearch =
                     !q ||
                     maDG.includes(q) ||
@@ -184,17 +179,14 @@ export default {
                     diaChi.includes(q) ||
                     dienThoai.includes(q);
 
-                // Lọc phái
                 const matchesGender = !this.selectedGender || r.phai === this.selectedGender;
 
-                // Lọc năm sinh
                 const year = r.ngaySinh ? new Date(r.ngaySinh).getFullYear() : null;
                 const matchesYear = !this.selectedYear || year == this.selectedYear;
 
                 return matchesSearch && matchesGender && matchesYear;
             });
 
-            // Sắp xếp
             if (this.sortBy) {
                 result = result.sort((a, b) => {
                     const field = this.sortBy === "collected" ? "totalCollected" : "totalPending";
@@ -218,9 +210,16 @@ export default {
         },
     },
 
-
-
     methods: {
+        openChat(reader) {
+            this.selectedReader = reader;
+            this.showChat = true;
+        },
+        closeChat() {
+            this.showChat = false;
+            this.selectedReader = null;
+        },
+
         resetFilters() {
             this.searchQuery = "";
             this.selectedGender = "";
@@ -229,40 +228,25 @@ export default {
             this.sortOrder = "desc";
             this.currentPage = 1;
         },
-        async fetchReaders() {
-            this.loading = true;
-            try {
-                this.readers = await readerService.getAll();
-            } catch (err) {
-                this.readers = [];
-                console.error("Lỗi tải độc giả:", err);
-            } finally {
-                this.loading = false;
-            }
-        },
+
         async fetchReaders() {
             this.loading = true;
             try {
                 const readers = await readerService.getAll();
-
-                // Lấy tiền cho từng độc giả
                 const readersWithPayment = await Promise.all(
                     readers.map(async (r) => {
                         try {
                             const payment = await readerService.getPayment(r._id);
-                            // payment = { totalCollected, totalPending }
                             return {
                                 ...r,
                                 totalCollected: payment.totalCollected,
-                                totalPending: payment.totalPending
+                                totalPending: payment.totalPending,
                             };
-                        } catch (err) {
-                            console.error(`Lỗi lấy tiền cho độc giả ${r._id}:`, err);
+                        } catch {
                             return { ...r, totalCollected: 0, totalPending: 0 };
                         }
                     })
                 );
-
                 this.readers = readersWithPayment;
             } catch (err) {
                 this.readers = [];
@@ -299,38 +283,23 @@ export default {
             try {
                 if (reader._id) {
                     await readerService.update(reader._id, reader);
-                    await Swal.fire({
-                        icon: "success",
-                        title: "Cập nhật độc giả thành công!",
-                        showConfirmButton: false,
-                        timer: 1500,
-                        toast: true,
-                        position: "top-end",
-                    });
+                    Swal.fire({ icon: "success", title: "Cập nhật độc giả thành công!", timer: 1500, toast: true, position: "top-end", showConfirmButton: false });
                 } else {
                     await readerService.create(reader);
-                    await Swal.fire({
-                        icon: "success",
-                        title: "Thêm độc giả thành công!",
-                        showConfirmButton: false,
-                        timer: 1500,
-                        toast: true,
-                        position: "top-end",
-                    });
+                    Swal.fire({ icon: "success", title: "Thêm độc giả thành công!", timer: 1500, toast: true, position: "top-end", showConfirmButton: false });
                 }
             } catch (err) {
                 console.error("Lỗi lưu độc giả:", err);
-                await Swal.fire("❌ Lỗi!", "Không thể lưu độc giả.", "error");
+                Swal.fire("❌ Lỗi!", "Không thể lưu độc giả.", "error");
             } finally {
                 this.closeForm();
                 this.fetchReaders();
             }
         },
+
         async handleDelete(reader) {
             try {
                 const response = await readerService.delete(reader._id);
-
-                // Xóa thành công
                 await this.fetchReaders();
                 this.closeForm();
 
@@ -345,22 +314,13 @@ export default {
                 });
             } catch (err) {
                 console.error("Lỗi khi xóa độc giả:", err);
-
-                // Xử lý lỗi từ backend
                 const errorMessage =
                     err.response?.data?.message ||
                     err.message ||
-                    "Đã xảy ra lỗi khi xóa độc giả. Vui lòng thử lại.";
-
-                Swal.fire({
-                    icon: "error",
-                    title: "Lỗi",
-                    text: errorMessage,
-                    toast: true,
-                    position: "top-end",
-                });
+                    "Đã xảy ra lỗi khi xóa độc giả.";
+                Swal.fire({ icon: "error", title: "Lỗi", text: errorMessage, toast: true, position: "top-end" });
             } finally {
-                await this.fetchReaders(); // Luôn làm mới danh sách
+                await this.fetchReaders();
             }
         },
 
@@ -375,15 +335,14 @@ export default {
                 confirmButtonColor: "#d33",
                 cancelButtonColor: "#3085d6",
             });
-
-            if (!result.isConfirmed) return;
-
-            await this.handleDelete(reader);
+            if (result.isConfirmed) await this.handleDelete(reader);
         },
     },
 
     mounted() {
         this.fetchReaders();
+        this.sender = JSON.parse(localStorage.getItem("staffInfo"));
+        // console.log(this.sender)
     },
 };
 </script>

@@ -240,6 +240,10 @@
         </div>
     </div>
 
+    <button class="btn btn-sm btn-primary" @click="openChat(reader)">Liên hệ với thủ thư</button>
+    <ChatBox v-if="showChat" :room-id="readerInfo._id" :sender="readerInfo" @close="closeChat" />
+
+
     </div>
 </template>
 
@@ -247,12 +251,21 @@
 import BookService from "@/services/book.service";
 import BorrowService from "@/services/borrow.service";
 import ReaderService from "@/services/reader.service";
+import ChatBox from "@/components/ChatBox.vue";
+
 import Swal from "sweetalert2";
 
 export default {
     name: "ReaderHome",
+    components: {
+        ChatBox,
+    },
     data() {
         return {
+            showChat: false,
+            selectedReader: null,
+            // sender: null,
+
             borrowedBooks: [],
             borrowLoading: false,
 
@@ -332,6 +345,35 @@ export default {
         },
     },
     methods: {
+        openChat(readerInfo) {
+            this.selectedReader = readerInfo;
+            this.showChat = true;
+        },
+        closeChat() {
+            this.showChat = false;
+            this.selectedReader = null;
+        },
+
+        async loadMessages(readerId) {
+            try {
+                const notis = await notificationService.getByReceiver(readerId);
+                this.messages = notis.map((n) => ({
+                    senderName: n.senderName || "Hệ thống",
+                    message: n.message,
+                }));
+            } catch (err) {
+                console.error("❌ Lỗi khi tải tin nhắn:", err);
+                this.messages = [
+                    { senderName: "Hệ thống", message: "Không thể tải tin nhắn." },
+                ];
+            }
+        },
+
+
+
+
+
+
         getBadgeClass(status) {
             switch (status) {
                 case "Sẵn sàng":
@@ -507,15 +549,18 @@ export default {
     },
 
     mounted() {
+
+        window.addEventListener("storage", this.loadReaderFromLocalStorage);
         this.fetchBooks();
         this.loadReaderFromLocalStorage();
 
-
         this.fetchBorrowedBooks();
-        // Nghe event storage khi login/logout
-        window.addEventListener("storage", this.loadReaderFromLocalStorage);
+
+
     },
     beforeUnmount() {
+
+
         window.removeEventListener("storage", this.loadReaderFromLocalStorage);
     },
 };

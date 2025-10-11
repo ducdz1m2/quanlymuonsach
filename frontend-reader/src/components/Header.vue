@@ -5,7 +5,9 @@
         </div>
 
         <div class="col-4 d-flex flex-row justify-content-end align-items-center">
-            <NotificationBell v-if="isLoggedIn" />
+            <!-- <NotificationBell @openChat="openChatWindow" /> -->
+
+            <ChatBox v-if="showChat" :room-id="activeRoomId" :sender="currentUser" @close="showChat = false" />
 
             <!-- Hiển thị avatar thật của nhân viên -->
             <Avatar v-if="isLoggedIn && readerInfo" class="mx-3" :src="readerInfo.anh || 'https://i.pravatar.cc/100'"
@@ -19,6 +21,8 @@
 import NotificationBell from "./NotificationBell.vue";
 import Avatar from "./Avatar.vue";
 import readerService from "@/services/reader.service";
+import ChatBox from "./ChatBox.vue";
+
 export default {
     components: { NotificationBell, Avatar },
     props: {
@@ -59,6 +63,7 @@ export default {
     },
 
     methods: {
+
         checkLoginStatus() {
             const token = localStorage.getItem("readerToken");
             this.isLoggedIn = !!token;

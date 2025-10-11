@@ -5,7 +5,7 @@
         </div>
 
         <div class="col-4 d-flex flex-row justify-content-end align-items-center">
-            <NotificationBell v-if="isLoggedIn" />
+            <!-- <NotificationBell v-if="isLoggedIn" /> -->
 
             <!-- Hiển thị avatar thật của nhân viên -->
             <Avatar v-if="isLoggedIn && staffInfo" class="mx-3" :src="staffInfo.anh || 'https://i.pravatar.cc/100'"
