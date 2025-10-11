@@ -24,7 +24,7 @@ import readerService from "@/services/reader.service";
 import ChatBox from "./ChatBox.vue";
 
 export default {
-    components: { NotificationBell, Avatar },
+    components: { NotificationBell, Avatar, ChatBox },
     props: {
         reader: {
             type: Object,
@@ -33,6 +33,7 @@ export default {
     },
     data() {
         return {
+            showChat: false,
             isLoggedIn: false,
             readerInfo: null, // thêm readerInfo reactive
         };

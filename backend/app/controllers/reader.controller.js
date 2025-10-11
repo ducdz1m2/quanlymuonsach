@@ -7,14 +7,28 @@ const jwt = require("jsonwebtoken");
 const SECRET_KEY = process.env.JWT_SECRET || "library_secret";
 
 exports.create = async (req, res, next) => {
+  console.log("📨 Body gửi lên:", req.body);
+
   if (!req.body?.hoLot || !req.body?.ten) {
     return next(new ApiError(400, "Tên độc giả không thể để trống."));
   }
+
   try {
     const readerService = new ReaderService(MongoDB.client);
     const document = await readerService.create(req.body);
-    return res.send(document);
+
+    console.log("🧾 Kết quả document:", document);
+
+    return res.status(201).send({
+      message: "Tạo độc giả thành công!",
+      reader: document,
+    });
   } catch (error) {
+    console.error("❌ Lỗi tạo độc giả:", error.message);
+    if (error.message === "duplicate_phone") {
+      return next(new ApiError(400, "Số điện thoại này đã được đăng ký!"));
+    }
+
     return next(new ApiError(500, "Đã xảy ra lỗi khi tạo độc giả."));
   }
 };

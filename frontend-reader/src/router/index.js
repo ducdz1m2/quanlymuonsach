@@ -3,9 +3,9 @@ import { createWebHistory, createRouter } from "vue-router";
 // Import các view
 import Home from "../views/Home.vue";
 import Books from "../views/Book.vue";
-import Notifications from "../views/Notification.vue";
 import Login from "../views/Login.vue";
 import NotFound from "../views/NotFound.vue";
+import Register from "@/views/Register.vue";
 
 const routes = [
   { path: "/", name: "home", component: Home },
@@ -15,16 +15,16 @@ const routes = [
     component: Books,
     meta: { requiresAuth: true }, // chỉ cho người đăng nhập xem
   },
-  {
-    path: "/notifications",
-    name: "notifications",
-    component: Notifications,
-    meta: { requiresAuth: true },
-  },
+
   {
     path: "/login",
     name: "reader-login",
     component: Login,
+  },
+  {
+    path: "/register",
+    name: "reader-register",
+    component: Register,
   },
   {
     path: "/:pathMatch(.*)*",

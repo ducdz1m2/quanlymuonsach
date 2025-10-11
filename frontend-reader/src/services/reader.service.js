@@ -4,6 +4,10 @@ class ReaderService {
   constructor(baseUrl = "/api/readers") {
     this.api = createApiClient(baseUrl);
   }
+  async create(data) {
+    const res = await this.api.post("/", data);
+    return res;
+  }
   async login(dienThoai, password) {
     const res = await this.api.post("/login", { dienThoai, password });
 
@@ -17,11 +21,6 @@ class ReaderService {
   }
   async getAll() {
     const res = await this.api.get("/");
-    return res.data;
-  }
-  // 🟢 Đăng ký tài khoản (tạo mới)
-  async register(data) {
-    const res = await this.api.post("/", data);
     return res.data;
   }
 

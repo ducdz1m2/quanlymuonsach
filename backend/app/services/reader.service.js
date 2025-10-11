@@ -8,7 +8,6 @@ class ReaderService {
   async extractReaderData(payload) {
     let maDG = payload.maDG;
 
-    // Nếu không có mã độc giả, tạo tự động
     if (!maDG) {
       maDG = await this.generateMaDG();
     }
@@ -54,14 +53,31 @@ class ReaderService {
 
   async create(payload) {
     const reader = await this.extractReaderData(payload);
-    reader.createdAt = new Date(); // <--- thêm dòng này
+    reader.createdAt = new Date();
 
-    const result = await this.Reader.findOneAndUpdate(
-      { hoLot: reader.hoLot, ten: reader.ten, ngaySinh: reader.ngaySinh },
-      { $set: reader },
-      { returnDocument: "after", upsert: true }
-    );
-    return result.value;
+    // 🔹 Chuẩn hóa dữ liệu
+    if (reader.dienThoai) {
+      reader.dienThoai = String(reader.dienThoai).trim();
+    }
+
+    console.log("📩 Dữ liệu nhận:", reader);
+
+    // 🔹 Kiểm tra trùng chính xác
+    if (reader.dienThoai && reader.dienThoai !== "") {
+      const existing = await this.Reader.findOne({
+        dienThoai: { $regex: `^${reader.dienThoai}$`, $options: "i" }, // so sánh chính xác, không phân biệt hoa thường
+      });
+
+      console.log("🔍 Kiểm tra trùng:", existing);
+
+      if (existing) {
+        throw new Error("duplicate_phone");
+      }
+    }
+
+    const result = await this.Reader.insertOne(reader);
+    console.log("✅ Inserted ID:", result.insertedId);
+    return { _id: result.insertedId, ...reader };
   }
 
   async find(filter) {
