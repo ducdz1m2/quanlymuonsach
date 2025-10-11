@@ -190,7 +190,7 @@ export default {
                     total: active.length,
                     dateLabel: `Cập nhật ${dateStr}`,
                 };
-                console.log(borrows.map(b => b.trangThai));
+                // console.log(borrows.map(b => b.trangThai));
 
                 // --- Tổng sách và độc giả ---
                 bookStats.value = { total: books.length, dateLabel: `Đến ${dateStr}` };

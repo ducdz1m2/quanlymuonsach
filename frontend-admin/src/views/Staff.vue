@@ -107,6 +107,7 @@ export default {
 
     data() {
         return {
+            currentStaff: null,
             staffs: [],
             searchQuery: "",
             selectedPosition: "",
@@ -214,17 +215,30 @@ export default {
 
             if (result.isConfirmed) {
                 try {
-                    await staffService.delete(staff._id);
-                    await this.fetchStaffs();
-                    this.closeForm();
-                    Swal.fire({
-                        icon: "success",
-                        title: "Đã xóa nhân viên!",
-                        timer: 1500,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: "top-end",
-                    });
+                    if (this.currentStaff._id != staff._id) {
+                        await staffService.delete(staff._id);
+                        await this.fetchStaffs();
+                        this.closeForm();
+                        Swal.fire({
+                            icon: "success",
+                            title: "Đã xóa nhân viên!",
+                            timer: 1500,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: "top-end",
+                        });
+                    } else {
+                        this.closeForm();
+                        Swal.fire({
+                            icon: "error",
+                            title: "Bạn không thể xóa tài khoản của chính bạn!",
+                            timer: 1500,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: "top-end",
+                        });
+                    }
+
                 } catch (err) {
                     console.error(err);
                     Swal.fire("❌ Xóa thất bại!", "", "error");
@@ -238,7 +252,7 @@ export default {
         },
     },
 
-    mounted() { this.fetchStaffs(); },
+    mounted() { this.fetchStaffs(); this.currentStaff = JSON.parse(localStorage.getItem("staffInfo")); console.log(this.currentStaff) },
 };
 </script>
 

@@ -1,7 +1,7 @@
 <template>
     <div>
         <form @submit.prevent="handleSubmit">
-            <!-- Mã nhân viên luôn hiển thị nhưng readonly -->
+            <!-- Mã nhân viên -->
             <div class="mb-3">
                 <label class="form-label">Mã nhân viên</label>
                 <input type="text" class="form-control" v-model="localStaff.maNV" readonly
@@ -16,6 +16,17 @@
                 <div v-if="v$.localStaff.hoTenNV.$error" class="text-danger">
                     <span v-if="!v$.localStaff.hoTenNV.required">Vui lòng nhập tên nhân viên</span>
                     <span v-else>Tên nhân viên phải ít nhất 3 ký tự</span>
+                </div>
+            </div>
+
+            <!-- Mật khẩu -->
+            <div class="mb-3">
+                <label class="form-label">Mật khẩu</label>
+                <input type="password" class="form-control" v-model="localStaff.password"
+                    :class="{ 'is-invalid': v$.localStaff.password.$error }" placeholder="Nhập mật khẩu" />
+                <div v-if="v$.localStaff.password.$error" class="text-danger">
+                    <span v-if="!v$.localStaff.password.required">Vui lòng nhập mật khẩu</span>
+                    <span v-else>Mật khẩu phải ít nhất 6 ký tự</span>
                 </div>
             </div>
 
@@ -114,6 +125,7 @@ import UploadImage from "../UploadImage.vue";
 import Swal from "sweetalert2";
 import staffService from "@/services/staff.service";
 import { nextTick } from "vue";
+
 export default {
     components: { UploadImage },
     props: {
@@ -122,10 +134,11 @@ export default {
     data() {
         return {
             localStaff: {
-                maNV: "", // frontend sẽ hiển thị nhưng readonly
+                maNV: "",
                 hoTenNV: "",
                 chucVu: "",
                 email: "",
+                password: "",
                 soDienThoai: "",
                 diaChi: "",
                 phai: "",
@@ -141,10 +154,11 @@ export default {
     },
     validations: {
         localStaff: {
-            maNV: {}, // không bắt buộc, backend tự sinh
+            maNV: {},
             hoTenNV: { required, minLength: minLength(3) },
             chucVu: { required },
             email: { required, email },
+            password: { required, minLength: minLength(6) },
             soDienThoai: { required, phone: helpers.regex(/^[0-9]{10,11}$/) },
             diaChi: { required, minLength: minLength(5) },
             phai: { required },
@@ -165,19 +179,15 @@ export default {
         },
     },
     methods: {
-
-
         async handleSubmit() {
             this.v$.$touch();
 
             if (this.v$.$invalid) {
-                // Đợi Vue render xong class is-invalid
                 await nextTick();
-
                 const firstError = this.$el.querySelector(".is-invalid");
                 if (firstError) {
                     firstError.scrollIntoView({ behavior: "smooth", block: "center" });
-                    firstError.focus({ preventScroll: true }); // optional: focus luôn
+                    firstError.focus({ preventScroll: true });
                 }
                 return;
             }

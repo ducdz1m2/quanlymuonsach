@@ -3,22 +3,24 @@
         <div class="card shadow p-4" style="width: 350px;">
             <h4 class="text-center mb-4">👨‍💼 Đăng nhập nhân viên</h4>
 
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input v-model="email" type="email" class="form-control" placeholder="Nhập email..." />
-            </div>
+            <form @submit.prevent="handleLogin">
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input v-model="email" type="email" class="form-control" placeholder="Nhập email..." />
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label">Mật khẩu</label>
-                <input v-model="password" type="password" class="form-control" placeholder="Nhập mật khẩu..." />
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">Mật khẩu</label>
+                    <input v-model="password" type="password" class="form-control" placeholder="Nhập mật khẩu..." />
+                </div>
 
-            <div class="text-danger mb-2" v-if="error">{{ error }}</div>
+                <div class="text-danger mb-2" v-if="error">{{ error }}</div>
 
-            <button class="btn btn-primary w-100" @click="handleLogin" :disabled="loading">
-                <span v-if="loading">Đang đăng nhập...</span>
-                <span v-else>Đăng nhập</span>
-            </button>
+                <button type="submit" class="btn btn-primary w-100" :disabled="loading">
+                    <span v-if="loading">Đang đăng nhập...</span>
+                    <span v-else>Đăng nhập</span>
+                </button>
+            </form>
         </div>
     </div>
 </template>
