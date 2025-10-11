@@ -44,6 +44,7 @@ export default {
             this.loading = true;
             try {
                 const res = await StaffService.login(this.email, this.password);
+                console.log(res.token)
                 localStorage.setItem("staffToken", res.token);
                 localStorage.setItem("staffInfo", JSON.stringify(res.staff));
                 window.dispatchEvent(new Event("storage"));

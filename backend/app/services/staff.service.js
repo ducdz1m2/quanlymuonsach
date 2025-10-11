@@ -1,6 +1,6 @@
 const { ObjectId } = require("mongodb");
 const bcrypt = require("bcrypt");
-
+const { generateToken } = require("../middlewares/auth.middleware");
 class StaffService {
   constructor(client) {
     this.Staff = client.db().collection("staff");
@@ -106,9 +106,12 @@ class StaffService {
     const isValid = await bcrypt.compare(password, staff.password);
     if (!isValid) return null;
 
-    // Xóa mật khẩu trước khi trả về
     delete staff.password;
-    return staff;
+
+    // 🔑 Tạo token
+    const token = generateToken({ ...staff, role: "staff" });
+
+    return { ...staff, token };
   }
 }
 

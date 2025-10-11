@@ -3,28 +3,30 @@
         <div class="card shadow p-4" style="width: 350px;">
             <h4 class="text-center mb-4">📖 Đăng nhập độc giả</h4>
 
-            <div class="mb-3">
-                <label class="form-label">📱 Số điện thoại</label>
-                <input v-model="dienThoai" type="text" class="form-control" placeholder="Nhập số điện thoại..." />
-            </div>
+            <form @keydown.enter="handleLogin">
+                <div class="mb-3">
+                    <label class="form-label">📱 Số điện thoại</label>
+                    <input v-model="dienThoai" type="text" class="form-control" placeholder="Nhập số điện thoại..." />
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label">🔑 Mật khẩu</label>
-                <input v-model="password" type="password" class="form-control" placeholder="Nhập mật khẩu..." />
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">🔑 Mật khẩu</label>
+                    <input v-model="password" type="password" class="form-control" placeholder="Nhập mật khẩu..." />
+                </div>
 
-            <div class="text-danger mb-2" v-if="error">{{ error }}</div>
+                <div class="text-danger mb-2" v-if="error">{{ error }}</div>
 
-            <button class="btn btn-primary w-100" @click="handleLogin" :disabled="loading">
-                <span v-if="loading">Đang đăng nhập...</span>
-                <span v-else>Đăng nhập</span>
-            </button>
+                <button class="btn btn-primary w-100" @click="handleLogin" :disabled="loading">
+                    <span v-if="loading">Đang đăng nhập...</span>
+                    <span v-else>Đăng nhập</span>
+                </button>
 
-            <div class="text-center mt-3">
-                <router-link to="/register" class="small text-decoration-none">
-                    📘 Chưa có tài khoản? Đăng ký ngay
-                </router-link>
-            </div>
+                <div class="text-center mt-3">
+                    <router-link to="/register" class="small text-decoration-none">
+                        📘 Chưa có tài khoản? Đăng ký ngay
+                    </router-link>
+                </div>
+            </form>
         </div>
     </div>
 </template>

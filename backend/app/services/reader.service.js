@@ -1,5 +1,6 @@
 const { ObjectId } = require("mongodb");
 const bcrypt = require("bcrypt");
+const { generateToken } = require("../middlewares/auth.middleware");
 class ReaderService {
   constructor(client) {
     this.Reader = client.db().collection("reader");
@@ -122,8 +123,13 @@ class ReaderService {
 
     const isValid = await bcrypt.compare(password, reader.password);
     if (!isValid) return null;
+
     delete reader.password;
-    return reader;
+
+    // 🔑 Tạo token
+    const token = generateToken({ ...reader, role: "reader" });
+
+    return { ...reader, token };
   }
 }
 
