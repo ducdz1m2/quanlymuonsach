@@ -103,7 +103,7 @@ export default {
 }
 
 .modal-dialog {
-  background: white;
+  /* background: white; */
   border-radius: 12px;
   width: 480px;
   /* 👈 nhỏ lại */

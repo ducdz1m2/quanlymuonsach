@@ -1,0 +1,382 @@
+/* src/assets/css/theme.css */
+
+/* ==========================
+   Light Theme (mặc định)
+========================== */
+:root {
+    --bg-body: #f8f9fa;
+    --text-body: #212529;
+    --table-bg: #ffffff;
+    --table-head-bg: #343a40;
+    --table-head-text: #ffffff;
+    --table-border: #dee2e6;
+    --btn-bg-primary: #0d6efd;
+    --btn-border-primary: #0d6efd;
+    --btn-text-primary: #ffffff;
+    --btn-bg-secondary: #6c757d;
+    --btn-border-secondary: #6c757d;
+    --btn-text-secondary: #ffffff;
+    --modal-bg: #ffffff;
+    --modal-text: #212529;
+    --badge-bg-secondary: #6c757d;
+    --badge-text-secondary: #ffffff;
+    --badge-bg-warning: #ffc107;
+    --badge-text-warning: #212529;
+    --badge-bg-info: #0dcaf0;
+    --badge-text-info: #212529;
+    --badge-bg-success: #198754;
+    --badge-text-success: #ffffff;
+    --badge-bg-danger: #dc3545;
+    --badge-text-danger: #ffffff;
+    --link-color: #0d6efd;
+}
+
+/* ==========================
+   Dark Theme
+========================== */
+body.dark {
+    --bg-body: #121212;
+    --text-body: #f8f9fa;
+    --table-bg: #1e1e1e;
+    --table-head-bg: #212529;
+    --table-head-text: #f8f9fa;
+    --table-border: #343a40;
+    --btn-bg-primary: #bb86fc;
+    --btn-border-primary: #bb86fc;
+    --btn-text-primary: #212529;
+    --btn-bg-secondary: #6c757d;
+    --btn-border-secondary: #6c757d;
+    --btn-text-secondary: #ffffff;
+    --modal-bg: #1e1e1e;
+    --modal-text: #f8f9fa;
+    --badge-bg-secondary: #6c757d;
+    --badge-text-secondary: #ffffff;
+    --badge-bg-warning: #ffc107;
+    --badge-text-warning: #212529;
+    --badge-bg-info: #0dcaf0;
+    --badge-text-info: #212529;
+    --badge-bg-success: #198754;
+    --badge-text-success: #ffffff;
+    --badge-bg-danger: #dc3545;
+    --badge-text-danger: #ffffff;
+    --link-color: #bb86fc;
+}
+
+/* ==========================
+   Apply variables
+========================== */
+body {
+    background-color: var(--bg-body);
+    color: var(--text-body);
+}
+
+a {
+    color: var(--link-color);
+}
+
+.table {
+    background-color: var(--table-bg);
+    border-color: var(--table-border);
+}
+
+.table thead {
+    background-color: var(--table-head-bg);
+    color: var(--table-head-text);
+}
+
+.table th,
+.table td {
+    border-color: var(--table-border);
+}
+
+.btn-primary {
+    background-color: var(--btn-bg-primary);
+    border-color: var(--btn-border-primary);
+    color: var(--btn-text-primary);
+}
+
+.btn-secondary {
+    background-color: var(--btn-bg-secondary);
+    border-color: var(--btn-border-secondary);
+    color: var(--btn-text-secondary);
+}
+
+.modal-dialog {
+    background-color: var(--modal-bg);
+    color: var(--modal-text);
+}
+
+.badge.bg-secondary {
+    background-color: var(--badge-bg-secondary);
+    color: var(--badge-text-secondary);
+}
+
+.badge.bg-warning {
+    background-color: var(--badge-bg-warning);
+    color: var(--badge-text-warning);
+}
+
+.badge.bg-info {
+    background-color: var(--badge-bg-info);
+    color: var(--badge-text-info);
+}
+
+.badge.bg-success {
+    background-color: var(--badge-bg-success);
+    color: var(--badge-text-success);
+}
+
+.badge.bg-danger {
+    background-color: var(--badge-bg-danger);
+    color: var(--badge-text-danger);
+}
+
+.btn-outline-primary {
+    border-color: var(--btn-bg-primary);
+    color: var(--btn-bg-primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--btn-bg-primary);
+    color: var(--btn-text-primary);
+}
+
+.btn-outline-info {
+    border-color: var(--badge-bg-info);
+    color: var(--badge-bg-info);
+}
+
+.btn-outline-info:hover {
+    background-color: var(--badge-bg-info);
+    color: var(--badge-text-info);
+}
+
+/* Pagination buttons */
+.btn-outline-primary {
+    border-color: var(--btn-bg-primary);
+    color: var(--btn-bg-primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--btn-bg-primary);
+    color: var(--btn-text-primary);
+}
+/* Table chung cho cả 2 theme */
+.table {
+    background-color: var(--table-bg) !important;
+    color: var(--text-body) !important;
+    border-color: var(--table-border) !important;
+}
+
+.table th,
+.table td {
+    background-color: var(--table-bg) !important;
+    color: var(--text-body) !important;
+    border-color: var(--table-border) !important;
+}
+
+/* Table head */
+.table thead th {
+    background-color: var(--table-head-bg) !important;
+    color: var(--table-head-text) !important;
+    border-color: var(--table-border) !important;
+}
+
+/* Hover row */
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    /* light theme hover */
+}
+
+body.dark .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    /* dark theme hover */
+}
+
+/* Striped rows (nếu dùng table-striped) */
+.table-striped tbody tr:nth-of-type(even) {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+body.dark .table-striped tbody tr:nth-of-type(even) {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ==========================
+   Inputs & selects
+========================== */
+.form-control,
+.form-select {
+    background-color: var(--table-bg) !important;
+    /* same as table background */
+    color: var(--text-body) !important;
+    border-color: var(--table-border) !important;
+}
+
+.form-control::placeholder,
+.form-select option {
+    color: var(--text-body) !important;
+}
+
+/* Hover / focus */
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--table-bg) !important;
+    color: var(--text-body) !important;
+    border-color: var(--btn-bg-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, .25);
+    /* optional, Bootstrap style */
+}
+
+/* ==========================
+   Buttons in toolbar
+========================== */
+.btn-secondary {
+    background-color: var(--btn-bg-secondary) !important;
+    border-color: var(--btn-border-secondary) !important;
+    color: var(--btn-text-secondary) !important;
+}
+
+.btn-outline-info {
+    border-color: var(--badge-bg-info) !important;
+    color: var(--badge-bg-info) !important;
+}
+
+.btn-outline-info:hover {
+    background-color: var(--badge-bg-info) !important;
+    color: var(--badge-text-info) !important;
+}
+
+.btn-outline-primary {
+    border-color: var(--btn-bg-primary) !important;
+    color: var(--btn-bg-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--btn-bg-primary) !important;
+    color: var(--btn-text-primary) !important;
+}
+
+/* Chatbox chung */
+.chatbox {
+    background-color: var(--modal-bg) !important;
+    color: var(--modal-text) !important;
+    border-radius: 10px;
+    width: 350px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Chatbox header */
+.chatbox-header h5 {
+    color: var(--text-body);
+}
+
+.clear-btn {
+    color: var(--badge-text-danger);
+}
+
+.clear-btn:hover {
+    color: red;
+}
+
+/* Messages container */
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    background-color: var(--table-bg) !important;
+    /* dùng cùng background như table */
+    color: var(--text-body) !important;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+/* Tin nhắn */
+.message {
+    margin: 4px 0;
+    background-color: var(--table-head-bg) !important;
+    /* light gray / dark gray */
+    color: var(--table-head-text) !important;
+    padding: 6px 10px;
+    border-radius: 8px;
+    max-width: 80%;
+    word-break: break-word;
+}
+
+/* Tin nhắn của user */
+.message.me {
+    background-color: var(--btn-bg-primary) !important;
+    color: var(--btn-text-primary) !important;
+    margin-left: auto;
+}
+
+/* Input area */
+.input-area input {
+    flex: 1;
+    background-color: var(--table-bg) !important;
+    color: var(--text-body) !important;
+    border: 1px solid var(--table-border) !important;
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
+.input-area input::placeholder {
+    color: var(--text-body) !important;
+}
+
+.input-area button {
+    background-color: var(--btn-bg-primary) !important;
+    border-color: var(--btn-border-primary) !important;
+    color: var(--btn-text-primary) !important;
+}
+/* ==========================
+   Avatar Dropdown
+========================== */
+.dropdown .btn {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.dropdown .dropdown-menu {
+    background-color: var(--modal-bg) !important;
+    color: var(--modal-text) !important;
+    border: 1px solid var(--table-border) !important;
+    min-width: 180px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown .dropdown-item {
+    color: var(--text-body) !important;
+    cursor: pointer;
+}
+
+.dropdown .dropdown-item:hover {
+    background-color: var(--btn-bg-primary) !important;
+    color: var(--btn-text-primary) !important;
+}
+
+.dropdown .dropdown-item.text-danger:hover {
+    background-color: var(--badge-bg-danger) !important;
+    color: var(--badge-text-danger) !important;
+}
+
+/* Avatar circle */
+.dropdown .rounded-circle {
+    background-color: var(--badge-bg-secondary);
+    color: var(--badge-text-secondary);
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.text-out-of-stock {
+    color: #ff4d4f;
+    /* đỏ hoặc màu bạn muốn */
+    font-weight: 500;
+}

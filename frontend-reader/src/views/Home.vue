@@ -59,7 +59,7 @@
         <!-- Table sách -->
         <div class="table-responsive">
             <table class="table table-bordered table-hover text-center align-middle">
-                <thead class="table-dark">
+                <thead class="">
                     <tr>
                         <th>Mã sách</th>
                         <th>Tên sách</th>
@@ -104,10 +104,10 @@
                             </button>
 
                             <!-- Hết sách -->
-                            <span v-else class="text-muted">Hết sách</span>
+                            <span v-else class="text-out-of-stock">Hết sách</span>
 
                             <!-- nút xem chi tiết mượn (tuỳ chọn) -->
-                            <button class="btn btn-sm btn-info ms-2" @click="viewBookDetail(book)">Chi tiết</button>
+                            <button class=" btn btn-sm btn-info ms-2" @click="viewBookDetail(book)">Chi tiết</button>
                         </td>
                     </tr>
 
@@ -587,7 +587,6 @@ export default {
 }
 
 .modal-dialog {
-    background: white;
     border-radius: 10px;
     width: 640px;
     max-width: 95%;

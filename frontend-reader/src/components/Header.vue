@@ -6,7 +6,7 @@
 
         <div class="col-4 d-flex flex-row justify-content-end align-items-center">
             <!-- <NotificationBell @openChat="openChatWindow" /> -->
-
+            <ThemeToggle />
             <ChatBox v-if="showChat" :room-id="activeRoomId" :sender="currentUser" @close="showChat = false" />
 
             <!-- Hiển thị avatar thật của nhân viên -->
@@ -22,9 +22,9 @@ import NotificationBell from "./NotificationBell.vue";
 import Avatar from "./Avatar.vue";
 import readerService from "@/services/reader.service";
 import ChatBox from "./ChatBox.vue";
-
+import ThemeToggle from "./ThemeToggle.vue";
 export default {
-    components: { NotificationBell, Avatar, ChatBox },
+    components: { NotificationBell, Avatar, ChatBox, ThemeToggle },
     props: {
         reader: {
             type: Object,

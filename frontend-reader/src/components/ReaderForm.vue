@@ -75,7 +75,16 @@
                     <span v-else>Số điện thoại không hợp lệ (phải gồm 10 số, bắt đầu bằng 0)</span>
                 </div>
             </div>
-
+            <!-- Mật khẩu -->
+            <div class="mb-3">
+                <label class="form-label">Mật khẩu</label>
+                <input type="password" class="form-control" v-model="localReader.password"
+                    :class="{ 'is-invalid': v$.localReader.password.$error }"
+                    placeholder="Nhập mật khẩu mới nếu muốn đổi" />
+                <div v-if="v$.localReader.password.$error" class="text-danger">
+                    <span v-if="!v$.localReader.password.minLength">Mật khẩu phải ít nhất 6 ký tự</span>
+                </div>
+            </div>
             <!-- Ảnh đại diện -->
             <div class="mb-3">
                 <label class="form-label">Ảnh đại diện</label>
@@ -112,6 +121,7 @@ export default {
                 maDG: "",
                 hoLot: "",
                 ten: "",
+                password: "",
                 ngaySinh: "",
                 phai: "",
                 diaChi: "",
@@ -147,6 +157,10 @@ export default {
             phai: { required },
             diaChi: { required, minLength: minLength(5) },
             dienThoai: { required, phone: helpers.regex(/^(0\d{9})$/) },
+            password: {
+                minLength: helpers.withMessage("Mật khẩu phải ít nhất 6 ký tự", minLength(6))
+            },
+
         },
     },
     methods: {

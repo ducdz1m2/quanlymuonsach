@@ -390,7 +390,7 @@ export default {
 }
 
 .modal-content {
-    background: white;
+    /* background: white; */
     border-radius: 10px;
     width: 600px;
     max-width: 95%;

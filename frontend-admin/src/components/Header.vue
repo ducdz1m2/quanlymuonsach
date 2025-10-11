@@ -6,7 +6,7 @@
 
         <div class="col-4 d-flex flex-row justify-content-end align-items-center">
             <!-- <NotificationBell v-if="isLoggedIn" /> -->
-
+            <ThemeToggle />
             <!-- Hiển thị avatar thật của nhân viên -->
             <Avatar v-if="isLoggedIn && staffInfo" class="mx-3" :src="staffInfo.anh || 'https://i.pravatar.cc/100'"
                 :name="staffInfo.hoTenNV || 'Người dùng'" size="sm" @view-profile="goToProfile"
@@ -18,9 +18,10 @@
 <script>
 import NotificationBell from "./NotificationBell.vue";
 import Avatar from "./Avatar.vue";
+import ThemeToggle from "./ThemeToggle.vue";
 
 export default {
-    components: { NotificationBell, Avatar },
+    components: { NotificationBell, Avatar, ThemeToggle },
     props: {
         staff: {
             type: Object,

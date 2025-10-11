@@ -75,13 +75,13 @@ export default {
 
 <style scoped>
 .upload-box {
-    background: #fafafa;
+    /* background: #fafafa; */
     transition: background 0.2s, border-color 0.2s;
     cursor: pointer;
 }
 
 .upload-box.drag-over {
-    background: #f0f8ff;
+    /* background: #f0f8ff; */
     border-color: #007bff;
 }
 </style>

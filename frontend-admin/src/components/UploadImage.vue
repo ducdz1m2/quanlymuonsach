@@ -2,7 +2,7 @@
     <div class="upload-box border border-2 rounded p-3 text-center" :class="{ 'drag-over': isDragOver }"
         @dragover.prevent="handleDragOver" @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop">
         <div v-if="!preview">
-            <p class="text-muted">📂 Kéo thả ảnh vào đây hoặc</p>
+            <p class="">📂 Kéo thả ảnh vào đây hoặc</p>
             <input type="file" accept="image/*" class="form-control" @change="handleFileSelect" />
         </div>
 
@@ -75,13 +75,13 @@ export default {
 
 <style scoped>
 .upload-box {
-    background: #fafafa;
+    /* background: #fafafa; */
     transition: background 0.2s, border-color 0.2s;
     cursor: pointer;
 }
 
 .upload-box.drag-over {
-    background: #f0f8ff;
+    /* background: #f0f8ff; */
     border-color: #007bff;
 }
 </style>
