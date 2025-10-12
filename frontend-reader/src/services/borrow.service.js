@@ -17,17 +17,24 @@ class BorrowService {
 
   async create(data) {
     const today = new Date();
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
-
     const formatDate = (date) => date.toISOString().split("T")[0];
+
+    // Nếu front-end truyền ngày trả thì dùng, nếu không thì mặc định +7 ngày
+    let returnDate;
+    if (data.ngayTra) {
+      returnDate = new Date(data.ngayTra);
+    } else {
+      returnDate = new Date(today);
+      returnDate.setDate(today.getDate() + 7);
+    }
 
     const payload = {
       bookId: data.bookId,
       docGiaId: data.docGiaId || data.readerId || data._id,
       ngayMuon: formatDate(today),
-      ngayTra: formatDate(nextWeek),
+      ngayTra: formatDate(returnDate),
       trangThai: "Chờ duyệt",
+      quantity: data.quantity || 1, // nếu cần số lượng
     };
 
     console.log("📤 Gửi phiếu mượn:", payload);

@@ -206,8 +206,17 @@
                             </span>
                         </td>
                         <td>
-                            {{ b.totalPayment != null ? b.totalPayment.toLocaleString() + ' ₫' : '-' }}
+                            {{
+                                b.bookInfo?.donGia != null
+                                    ? formatMoney(
+                                        ((b.bookInfo.donGia || 0) * (b.quantity || 1) *
+                                            (Math.ceil((new Date(b.ngayTra) - new Date(b.ngayMuon)) / (1000 * 60 * 60 * 24)) || 1)
+                                        ) + (b.penalty || 0)
+                                    )
+                                    : '-'
+                            }}
                         </td>
+
                         <td>
                             <button class="btn btn-sm btn-outline-info" @click="viewBookDetail(b.bookInfo)"
                                 :disabled="!b.bookInfo">
@@ -221,7 +230,7 @@
         </div>
     </div>
 
-    <!-- Optional: Modal show book details -->
+
     <div v-if="showDetailModal" class="modal-backdrop" @click.self="closeDetailModal">
         <div class="modal-dialog">
             <div class="modal-content p-4">
@@ -229,6 +238,7 @@
                 <div v-if="detailLoading">⏳ Đang tải...</div>
                 <div v-else-if="selectedBook">
                     <p><strong>{{ selectedBook.tenSach }}</strong></p>
+                    <img :src="selectedBook.anhBia" alt="" width="150px">
                     <p>{{ selectedBook.moTa || "Không có mô tả" }}</p>
                     <p><strong>Số lượng:</strong> {{ selectedBook.soQuyen ?? 0 }}</p>
                     <p><strong>Đơn giá:</strong> {{ formatMoney(selectedBook.donGia) }}</p>
@@ -464,29 +474,37 @@ export default {
                 return;
             }
 
-            const result = await Swal.fire({
+            // Popup chọn ngày trả
+            const { value: returnDate } = await Swal.fire({
                 title: `Mượn sách: ${book.tenSach}`,
-                text: "Bạn có chắc muốn mượn 1 cuốn sách này?",
-                icon: "question",
+                html: `
+            <p>Chọn ngày trả sách:</p>
+            <input type="date" id="return-date" class="swal2-input" min="${new Date().toISOString().split('T')[0]}">
+        `,
                 showCancelButton: true,
                 confirmButtonText: "Mượn",
                 cancelButtonText: "Hủy",
+                preConfirm: () => {
+                    const date = document.getElementById("return-date").value;
+                    if (!date) Swal.showValidationMessage("Bạn phải chọn ngày trả sách!");
+                    return date;
+                },
             });
 
-            if (!result.isConfirmed) return;
+            if (!returnDate) return;
 
             try {
-
                 await BorrowService.create({
                     readerId: this.readerInfo._id,
                     bookId: book._id,
                     quantity: 1,
+                    ngayTra: returnDate,  // gửi ngày trả cho backend
                 });
 
                 Swal.fire({
                     icon: "success",
                     title: "Mượn thành công!",
-                    text: book.tenSach,
+                    text: `Bạn sẽ trả sách vào: ${returnDate}`,
                     timer: 1500,
                     showConfirmButton: false,
                     toast: true,
@@ -497,9 +515,6 @@ export default {
                 await this.fetchBorrowedBooks();
 
             } catch (err) {
-                // console.error("Lỗi mượn sách:", err);
-
-                // Swal.fire("❌ Lỗi!", "Lỗi khi tải tin nhắn.", "error");
                 if (err.response && err.response.data && err.response.data.message) {
                     Swal.fire("Lỗi", err.response.data.message, "error");
                 } else {

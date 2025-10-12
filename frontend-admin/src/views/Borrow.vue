@@ -407,7 +407,7 @@ export default {
 
 .detail-section {
     flex: 1 1 45%;
-    background: #f8f9fa;
+    /* background: #f8f9fa; */
     padding: 15px;
     border-radius: 8px;
     border: 1px solid #ddd;
@@ -416,7 +416,7 @@ export default {
 .detail-section h6 {
     margin-bottom: 10px;
     font-weight: 600;
-    color: #333;
+    /* color: #333; */
 }
 
 .detail-section p {
