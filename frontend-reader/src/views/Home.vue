@@ -240,7 +240,13 @@
         </div>
     </div>
 
-    <button v-if="isLoggedIn" class="btn btn-sm btn-primary" @click="openChat(reader)">Liên hệ với thủ thư</button>
+    <button v-if="isLoggedIn" class="btn btn-sm btn-primary position-relative" @click="openChat(readerInfo)">
+        Liên hệ với thủ thư
+        <span v-if="chatNotifications[readerInfo._id]"
+            class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+        </span>
+    </button>
+
     <ChatBox v-if="showChat" :room-id="readerInfo._id" :sender="readerInfo" @close="closeChat" />
 
 
@@ -252,7 +258,7 @@ import BookService from "@/services/book.service";
 import BorrowService from "@/services/borrow.service";
 import ReaderService from "@/services/reader.service";
 import ChatBox from "@/components/ChatBox.vue";
-
+import { io } from "socket.io-client";
 import Swal from "sweetalert2";
 
 export default {
@@ -265,7 +271,7 @@ export default {
             showChat: false,
             selectedReader: null,
             // sender: null,
-
+            chatNotifications: {},
             borrowedBooks: [],
             borrowLoading: false,
 
@@ -348,7 +354,9 @@ export default {
         openChat(readerInfo) {
             this.selectedReader = readerInfo;
             this.showChat = true;
+            this.chatNotifications[readerInfo._id] = false;
         },
+
         closeChat() {
             this.showChat = false;
             this.selectedReader = null;
@@ -362,7 +370,8 @@ export default {
                     message: n.message,
                 }));
             } catch (err) {
-                console.error("❌ Lỗi khi tải tin nhắn:", err);
+
+                Swal.fire("❌ Lỗi!", "Lỗi khi tải tin nhắn.", "error");
                 this.messages = [
                     { senderName: "Hệ thống", message: "Không thể tải tin nhắn." },
                 ];
@@ -399,7 +408,9 @@ export default {
             try {
                 this.borrowedBooks = await BorrowService.getByReader(this.readerInfo._id);
             } catch (err) {
-                console.error("Lỗi tải sách đang mượn:", err);
+                // console.error("Lỗi tải sách đang mượn:", err);
+
+                Swal.fire("❌ Lỗi!", "Lỗi khi tải sách mượn.", "error");
                 this.borrowedBooks = [];
             } finally {
                 this.borrowLoading = false;
@@ -422,7 +433,9 @@ export default {
             try {
                 this.books = await BookService.getAll();
             } catch (err) {
-                console.error("Lỗi tải sách:", err);
+                // console.error("Lỗi tải sách:", err);
+
+                Swal.fire("❌ Lỗi!", "Lỗi khi tải sách.", "error");
                 this.books = [];
             } finally {
                 this.loading = false;
@@ -463,7 +476,7 @@ export default {
             if (!result.isConfirmed) return;
 
             try {
-                // Gửi yêu cầu mượn. Backend mong muốn payload khác thì chỉnh lại
+
                 await BorrowService.create({
                     readerId: this.readerInfo._id,
                     bookId: book._id,
@@ -484,7 +497,9 @@ export default {
                 await this.fetchBorrowedBooks();
 
             } catch (err) {
-                console.error("Lỗi mượn sách:", err);
+                // console.error("Lỗi mượn sách:", err);
+
+                // Swal.fire("❌ Lỗi!", "Lỗi khi tải tin nhắn.", "error");
                 if (err.response && err.response.data && err.response.data.message) {
                     Swal.fire("Lỗi", err.response.data.message, "error");
                 } else {
@@ -508,7 +523,7 @@ export default {
                 const res = await ReaderService.getPayment(this.readerInfo._id);
                 this.payment = res;
             } catch (err) {
-                console.error("Lỗi tải payment:", err);
+                // console.error("Lỗi tải payment:", err);
                 Swal.fire("Lỗi", "Không thể tải thông tin đã tiêu", "error");
             } finally {
                 this.paymentLoading = false;
@@ -555,7 +570,17 @@ export default {
         this.loadReaderFromLocalStorage();
 
         this.fetchBorrowedBooks();
+        this.socket = io("http://localhost:3000");
 
+        this.socket.on("receiveMessage", (msg) => {
+
+            if (msg.sender != this.readerInfo.ten) {
+
+                this.chatNotifications[msg.room] = true;
+            }
+
+
+        });
 
     },
     beforeUnmount() {

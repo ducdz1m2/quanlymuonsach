@@ -41,12 +41,18 @@ export default {
             messages: [],
             newMessage: "",
             currentUser: this.sender.hoTenNV,
+
         };
     },
     methods: {
         async loadMessages() {
             try {
                 this.messages = await messageService.getByRoom(this.target._id);
+
+
+
+
+
             } catch (err) {
                 console.error("Lỗi tải tin nhắn:", err);
             }
@@ -84,6 +90,7 @@ export default {
         socket.on("receiveMessage", (msg) => {
             if (msg.room === this.target._id) {
                 this.messages.push(msg);
+
             }
         });
     },

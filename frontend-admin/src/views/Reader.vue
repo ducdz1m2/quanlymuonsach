@@ -86,7 +86,13 @@
                             <button class="btn btn-sm btn-warning me-2" @click="openEditModal(reader)">Sửa</button>
                             <button class="btn btn-sm btn-danger" @click="confirmDelete(reader)">Xóa</button>
 
-                            <button class="btn btn-sm btn-secondary" @click="openChat(reader)">💬 Chat</button>
+                            <button class="btn btn-sm btn-secondary position-relative" @click="openChat(reader)">
+                                💬 Chat
+                                <span v-if="chatNotifications && chatNotifications[reader._id]"
+                                    class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                </span>
+                            </button>
+
 
                         </td>
                     </tr>
@@ -117,7 +123,9 @@
             </div>
         </div>
     </div>
-    <ChatBox v-if="showChat" :target="selectedReader" :sender="sender" @close="closeChat" />
+    <ChatBox v-if="showChat" :target="selectedReader" :sender="sender" @close="closeChat"
+        @new-message="handleNewMessage" />
+
 
 </template>
 
@@ -125,9 +133,9 @@
 import ReaderForm from "@/components/readers/ReaderForm.vue";
 import readerService from "@/services/reader.service";
 import ChatBox from "@/components/ChatBox.vue";
-
+import { reactive } from 'vue';
 import Swal from "sweetalert2";
-
+import { io } from "socket.io-client";
 export default {
     components: { ReaderForm, ChatBox },
 
@@ -136,7 +144,7 @@ export default {
             showChat: false,
             selectedReader: null,
             sender: null,
-
+            chatNotifications: reactive({}),
             readers: [],
             searchQuery: "",
             selectedGender: "",
@@ -211,9 +219,17 @@ export default {
     },
 
     methods: {
+        handleNewMessage(reader) {
+            // gán trực tiếp vẫn reactive
+            this.chatNotifications[reader._id] = true;
+        },
+
         openChat(reader) {
             this.selectedReader = reader;
             this.showChat = true;
+
+            // tắt badge ngay lập tức
+            this.chatNotifications[reader._id] = false;
         },
         closeChat() {
             this.showChat = false;
@@ -289,7 +305,7 @@ export default {
                     Swal.fire({ icon: "success", title: "Thêm độc giả thành công!", timer: 1500, toast: true, position: "top-end", showConfirmButton: false });
                 }
             } catch (err) {
-                // console.error("Lỗi lưu độc giả:", err);
+
                 Swal.fire("❌ Lỗi!", "Không thể lưu độc giả.", "error");
             } finally {
                 this.closeForm();
@@ -342,7 +358,19 @@ export default {
     mounted() {
         this.fetchReaders();
         this.sender = JSON.parse(localStorage.getItem("staffInfo"));
-        // console.log(this.sender)
+
+        this.socket = io("http://localhost:3000");
+
+        this.socket.on("receiveMessage", (msg) => {
+            // bật badge trực tiếp
+
+            if (msg.sender != this.sender.hoTenNV) {
+                this.chatNotifications[msg.room] = true;
+
+            }
+
+
+        });
     },
 };
 </script>
