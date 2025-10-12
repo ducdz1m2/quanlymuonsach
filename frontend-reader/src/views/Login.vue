@@ -1,6 +1,6 @@
 <template>
-    <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
-        <div class="card shadow p-4" style="width: 350px;">
+    <div class="d-flex justify-content-center align-items-center vh-100 bg-light auth-card">
+        <div class="card shadow p-4 auth-card" style="width: 350px;">
             <h4 class="text-center mb-4">📖 Đăng nhập độc giả</h4>
 
             <form @keydown.enter="handleLogin">

@@ -41,12 +41,12 @@ app.post(
   require("./app/controllers/reader.controller").login
 );
 app.post("/api/readers", require("./app/controllers/reader.controller").create);
-
+app.use("/api/books", bookRouter);
 // 🧱 Các route còn lại đều cần token
 app.use(verifyToken);
 
 // Sau đây là các route cần xác thực JWT
-app.use("/api/books", bookRouter);
+
 app.use("/api/borrows", borrowRouter);
 app.use("/api/publishers", publisherRouter);
 app.use("/api/messages", messageRouter);

@@ -240,7 +240,7 @@
         </div>
     </div>
 
-    <button class="btn btn-sm btn-primary" @click="openChat(reader)">Liên hệ với thủ thư</button>
+    <button v-if="isLoggedIn" class="btn btn-sm btn-primary" @click="openChat(reader)">Liên hệ với thủ thư</button>
     <ChatBox v-if="showChat" :room-id="readerInfo._id" :sender="readerInfo" @close="closeChat" />
 
 

@@ -380,3 +380,104 @@ body.dark .table-striped tbody tr:nth-of-type(even) {
     /* đỏ hoặc màu bạn muốn */
     font-weight: 500;
 }
+.auth-card {
+    background-color: var(--bg-body) !important;
+    color: var(--text-body) !important;
+    border: 1px solid var(--table-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Inputs & selects trong form auth */
+.auth-card .form-control,
+.auth-card .form-select {
+    background-color: var(--table-bg) !important;
+    color: var(--text-body) !important;
+    border: 1px solid var(--table-border) !important;
+    border-radius: 6px;
+}
+
+.auth-card .form-control:focus,
+.auth-card .form-select:focus {
+    border-color: var(--btn-bg-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Nút submit */
+.auth-card .btn-primary {
+    background-color: var(--btn-bg-primary) !important;
+    border-color: var(--btn-border-primary) !important;
+    color: var(--btn-text-primary) !important;
+}
+
+/* Text lỗi */
+.auth-card .text-danger {
+    color: var(--badge-bg-danger) !important;
+}
+
+/* Link footer */
+.auth-card a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.auth-card a:hover {
+    text-decoration: underline;
+}
+.auth-card,
+.reader-form {
+    background-color: var(--bg-body) !important;
+    color: var(--text-body) !important;
+    border: 1px solid var(--table-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+}
+
+/* Inputs & selects */
+.reader-form .form-control,
+.reader-form .form-select {
+    background-color: var(--table-bg) !important;
+    color: var(--text-body) !important;
+    border: 1px solid var(--table-border) !important;
+    border-radius: 6px;
+}
+
+.reader-form .form-control:focus,
+.reader-form .form-select:focus {
+    border-color: var(--btn-bg-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Nút */
+.reader-form .btn-primary {
+    background-color: var(--btn-bg-primary) !important;
+    border-color: var(--btn-border-primary) !important;
+    color: var(--btn-text-primary) !important;
+}
+
+.reader-form .btn-secondary {
+    background-color: var(--btn-bg-secondary) !important;
+    border-color: var(--btn-border-secondary) !important;
+    color: var(--btn-text-secondary) !important;
+}
+
+.reader-form .btn-danger {
+    background-color: var(--badge-bg-danger) !important;
+    border-color: var(--badge-bg-danger) !important;
+    color: var(--badge-text-danger) !important;
+}
+
+/* Text lỗi */
+.reader-form .text-danger {
+    color: var(--badge-bg-danger) !important;
+}
+
+/* Link */
+.reader-form a {
+    color: var(--link-color);
+}
+
+.reader-form a:hover {
+    text-decoration: underline;
+}
