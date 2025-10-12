@@ -289,7 +289,7 @@ export default {
                     Swal.fire({ icon: "success", title: "Thêm độc giả thành công!", timer: 1500, toast: true, position: "top-end", showConfirmButton: false });
                 }
             } catch (err) {
-                console.error("Lỗi lưu độc giả:", err);
+                // console.error("Lỗi lưu độc giả:", err);
                 Swal.fire("❌ Lỗi!", "Không thể lưu độc giả.", "error");
             } finally {
                 this.closeForm();

@@ -30,6 +30,7 @@ import Footer from "./components/Footer.vue";
 import Sidebar from "./components/Sidebar.vue";
 import StaffForm from "./components/staffs/StaffForm.vue";
 import staffService from "./services/staff.service";
+
 export default {
   components: { Header, Footer, Sidebar, StaffForm },
   data() {
@@ -45,7 +46,7 @@ export default {
     openProfile(staffInfo) {
       // Khi Header emit ra sự kiện open-profile
       this.selectedStaff = { ...staffInfo };
-      console.log(staffInfo)
+      // console.log(staffInfo)
       this.showProfileModal = true;
     },
     closeProfile() {
@@ -62,7 +63,8 @@ export default {
         await this.fetchStaff();
         this.showProfileModal = false;
       } catch (err) {
-        console.error("❌ Lỗi khi lưu hồ sơ:", err);
+        // console.error("❌ Lỗi khi lưu hồ sơ:", err);
+        Swal.fire("❌ Lỗi!", "Lỗi khi lưu hồ sơ", "error");
       }
     },
 
@@ -76,10 +78,11 @@ export default {
         if (latestStaff) {
           this.selectedStaff = latestStaff;
           localStorage.setItem("staffInfo", JSON.stringify(latestStaff));
-          console.log("🔁 Hồ sơ nhân viên đã được đồng bộ:", latestStaff);
+          // console.log("🔁 Hồ sơ nhân viên đã được đồng bộ:", latestStaff);
         }
       } catch (error) {
-        console.error("❌ Lỗi khi tải lại thông tin nhân viên:", error);
+        // console.error("❌ Lỗi khi tải lại thông tin nhân viên:", error);
+        Swal.fire("❌ Lỗi!", "Lỗi khi tải lại thông tin nhân viên", "error");
       }
     },
 
