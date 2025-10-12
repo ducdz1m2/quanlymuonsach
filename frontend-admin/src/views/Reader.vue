@@ -140,7 +140,7 @@
 import ReaderForm from "@/components/readers/ReaderForm.vue";
 import readerService from "@/services/reader.service";
 import ChatBox from "@/components/ChatBox.vue";
-import { reactive } from 'vue';
+import { inject } from "vue";
 import Swal from "sweetalert2";
 import { socket } from "@/services/socket";
 export default {
@@ -152,7 +152,7 @@ export default {
             showChat: false,
             selectedReader: null,
             sender: null,
-            chatNotifications: reactive({}),
+
             readers: [],
             searchQuery: "",
             selectedGender: "",
@@ -231,19 +231,22 @@ export default {
             return this.filteredReaders.slice(start, start + this.itemsPerPage);
         },
     },
-
+    created() {
+        // Inject chatNotifications và sender
+        this.chatNotifications = inject("chatNotifications");
+        this.sender = inject("sender");
+    },
     methods: {
-        handleNewMessage(reader) {
-            // gán trực tiếp vẫn reactive
-            this.chatNotifications[reader._id] = true;
-        },
-
         openChat(reader) {
             this.selectedReader = reader;
             this.showChat = true;
 
-            // tắt badge ngay lập tức
+            // Tắt badge ngay khi mở chat
             this.chatNotifications[reader._id] = false;
+        },
+        handleNewMessage(reader) {
+            // Nếu muốn update thủ công
+            this.chatNotifications[reader._id] = true;
         },
         closeChat() {
             this.showChat = false;

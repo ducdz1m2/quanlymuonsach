@@ -23,12 +23,14 @@
     </div>
   </div>
 </template>
-
 <script>
 import Header from "./components/Header.vue";
 import Footer from "./components/Footer.vue";
 import Sidebar from "./components/Sidebar.vue";
 import StaffForm from "./components/staffs/StaffForm.vue";
+import { reactive, provide } from "vue";
+import { socket } from "@/services/socket";
+import Swal from "sweetalert2";
 import staffService from "./services/staff.service";
 
 export default {
@@ -37,16 +39,35 @@ export default {
     return {
       showProfileModal: false,
       selectedStaff: {},
+      chatNotifications: reactive({}), // 🔹 đặt ở đây
+      sender: null,
     };
   },
   mounted() {
     this.fetchStaff();
+
+    // Lấy thông tin sender
+    this.sender = JSON.parse(localStorage.getItem("staffInfo")) || {};
+
+    // Socket lắng nghe tin nhắn
+    socket.on("receiveMessage", this.handleIncomingMessage);
+
+    // Provide để các component con dùng
+    provide("chatNotifications", this.chatNotifications);
+    provide("sender", this.sender);
+  },
+  beforeUnmount() {
+    socket.off("receiveMessage", this.handleIncomingMessage);
   },
   methods: {
+    handleIncomingMessage(msg) {
+      if (msg.sender !== this.sender?.hoTenNV) {
+        this.chatNotifications[msg.room] = true;
+      }
+    },
+
     openProfile(staffInfo) {
-      // Khi Header emit ra sự kiện open-profile
       this.selectedStaff = { ...staffInfo };
-      // console.log(staffInfo)
       this.showProfileModal = true;
     },
     closeProfile() {
@@ -54,21 +75,15 @@ export default {
     },
     async handleSaveProfile(updatedStaff) {
       try {
-        // ✅ Tạo bản sao không có mật khẩu
         const { matKhau, password, ...safeData } = updatedStaff;
-
         await staffService.update(updatedStaff._id, safeData);
         localStorage.setItem("staffInfo", JSON.stringify(safeData));
-
         await this.fetchStaff();
         this.showProfileModal = false;
       } catch (err) {
-        // console.error("❌ Lỗi khi lưu hồ sơ:", err);
         Swal.fire("❌ Lỗi!", "Lỗi khi lưu hồ sơ", "error");
       }
     },
-
-    // 👇 Thêm hàm này
     async fetchStaff() {
       try {
         const staffInfo = JSON.parse(localStorage.getItem("staffInfo"));
@@ -78,18 +93,15 @@ export default {
         if (latestStaff) {
           this.selectedStaff = latestStaff;
           localStorage.setItem("staffInfo", JSON.stringify(latestStaff));
-          // console.log("🔁 Hồ sơ nhân viên đã được đồng bộ:", latestStaff);
         }
       } catch (error) {
-        // console.error("❌ Lỗi khi tải lại thông tin nhân viên:", error);
         Swal.fire("❌ Lỗi!", "Lỗi khi tải lại thông tin nhân viên", "error");
       }
     },
-
-
   },
 };
 </script>
+
 
 <style scoped>
 .modal-backdrop {
