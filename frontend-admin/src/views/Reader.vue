@@ -38,6 +38,13 @@
                     <option value="asc">⬆️ Bé → Lớn</option>
                 </select>
             </div>
+            <div class="col-auto">
+                <select class="form-select" v-model="selectedUnreadFilter">
+                    <option value="">Tất cả độc giả</option>
+                    <option value="unread">Chỉ tin nhắn mới</option>
+                </select>
+            </div>
+
 
             <div class="col-auto">
                 <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
@@ -135,12 +142,13 @@ import readerService from "@/services/reader.service";
 import ChatBox from "@/components/ChatBox.vue";
 import { reactive } from 'vue';
 import Swal from "sweetalert2";
-import { io } from "socket.io-client";
+import { socket } from "@/services/socket";
 export default {
     components: { ReaderForm, ChatBox },
 
     data() {
         return {
+            selectedUnreadFilter: "",
             showChat: false,
             selectedReader: null,
             sender: null,
@@ -192,8 +200,14 @@ export default {
                 const year = r.ngaySinh ? new Date(r.ngaySinh).getFullYear() : null;
                 const matchesYear = !this.selectedYear || year == this.selectedYear;
 
-                return matchesSearch && matchesGender && matchesYear;
+                const matchesUnread =
+                    !this.selectedUnreadFilter ||
+                    (this.selectedUnreadFilter === "unread" && this.chatNotifications[r._id]);
+
+                return matchesSearch && matchesGender && matchesYear && matchesUnread;
+
             });
+
 
             if (this.sortBy) {
                 result = result.sort((a, b) => {
@@ -359,19 +373,19 @@ export default {
         this.fetchReaders();
         this.sender = JSON.parse(localStorage.getItem("staffInfo"));
 
-        this.socket = io("http://localhost:3000");
-
-        this.socket.on("receiveMessage", (msg) => {
-            // bật badge trực tiếp
-
-            if (msg.sender != this.sender.hoTenNV) {
+        const onMessage = (msg) => {
+            if (msg.sender !== this.sender.hoTenNV) {
                 this.chatNotifications[msg.room] = true;
-
             }
-
-
-        });
+        };
+        this._onMessage = onMessage;
+        socket.on("receiveMessage", onMessage);
     },
+    beforeUnmount() {
+        if (this._onMessage) socket.off("receiveMessage", this._onMessage);
+    }
+
+
 };
 </script>
 

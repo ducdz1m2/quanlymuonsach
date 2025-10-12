@@ -26,18 +26,14 @@
 </template>
 
 <script>
-import { io } from "socket.io-client";
+import { socket } from "@/services/socket";
 import messageService from "@/services/message.service";
-
-// ⚙️ Kết nối socket tới backend
-const socket = io("http://localhost:3000");
 
 export default {
     props: {
         roomId: { type: String, required: true },
         sender: { type: Object, required: true },
     },
-
     data() {
         return {
             messages: [],
@@ -45,19 +41,20 @@ export default {
             currentUser: this.sender.ten,
         };
     },
-
     methods: {
-        // 🔹 Tải tin nhắn từ DB
         async loadMessages() {
             try {
-                this.messages = await messageService.getByRoom(this.roomId);
-                this.$nextTick(() => this.scrollToBottom());
+                let msgs = await messageService.getByRoom(this.roomId);
+
+                // Nếu muốn bỏ tin nhắn mới nhất:
+                if (msgs.length > 0) msgs.pop();
+
+                this.messages = msgs;
+                this.scrollToBottom();
             } catch (err) {
                 console.error("Lỗi tải tin nhắn:", err);
             }
         },
-
-        // 🔹 Gửi tin nhắn mới
         async sendMessage() {
             if (!this.newMessage.trim()) return;
             try {
@@ -67,44 +64,47 @@ export default {
                     text: this.newMessage.trim(),
                 };
 
-                await messageService.create(message);
-                socket.emit("sendMessage", message);
-
+                const saved = await messageService.create(message);
+                socket.emit("sendMessage", saved);
                 this.newMessage = "";
-                this.$nextTick(() => this.scrollToBottom());
+                this.scrollToBottom();
             } catch (err) {
                 console.error("Lỗi gửi tin nhắn:", err);
             }
         },
 
-        // 🔹 Ẩn toàn bộ tin nhắn khỏi UI (client-side)
         clearMessages() {
             this.messages = [];
         },
 
-        // 🔹 Cuộn xuống cuối
         scrollToBottom() {
-            const container = this.$refs.messagesContainer;
-            if (container) {
-                container.scrollTop = container.scrollHeight;
-            }
+            this.$nextTick(() => {
+                const container = this.$refs.messagesContainer;
+                if (container) container.scrollTop = container.scrollHeight;
+            });
         },
     },
 
     mounted() {
-        this.loadMessages();
+        // 1. Đăng ký listener trước
+        const onMessage = (msg) => {
+            if (!this.messages.find((m) => m._id === msg._id) && msg.room === this.roomId) {
+                this.messages.push(msg);
+                this.scrollToBottom();
+            }
+        };
+        this._onMessage = onMessage;
+        socket.on("receiveMessage", onMessage);
+
+        // 2. Tham gia room
         socket.emit("joinRoom", this.roomId);
 
-        socket.on("receiveMessage", (msg) => {
-            if (msg.room === this.roomId) {
-                this.messages.push(msg);
-                this.$nextTick(() => this.scrollToBottom());
-            }
-        });
+        // 3. Load tin nhắn cũ
+        this.loadMessages();
     },
 
     beforeUnmount() {
-        socket.off("receiveMessage");
+        if (this._onMessage) socket.off("receiveMessage", this._onMessage);
         socket.emit("leaveRoom", this.roomId);
     },
 };

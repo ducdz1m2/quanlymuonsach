@@ -8,11 +8,12 @@
                 </button>
             </div>
 
-            <div class="messages">
+            <div class="messages" ref="messagesContainer">
                 <div v-for="m in messages" :key="m._id" class="message" :class="{ me: m.sender === currentUser }">
                     <strong>{{ m.sender }}:</strong> {{ m.text }}
                 </div>
             </div>
+
 
             <div class="input-area">
                 <input v-model="newMessage" placeholder="Nhập tin nhắn..." @keyup.enter="sendMessage" />
@@ -25,11 +26,11 @@
 </template>
 
 <script>
-import { io } from "socket.io-client";
+import { socket } from "@/services/socket";
 import messageService from "@/services/message.service";
 
 // ⚙️ Kết nối Socket.IO tới backend
-const socket = io("http://localhost:3000");
+
 
 export default {
     props: {
@@ -38,6 +39,7 @@ export default {
     },
     data() {
         return {
+
             messages: [],
             newMessage: "",
             currentUser: this.sender.hoTenNV,
@@ -45,18 +47,30 @@ export default {
         };
     },
     methods: {
+        scrollToBottom() {
+            this.$nextTick(() => {
+                const container = this.$refs.messagesContainer;
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            });
+        },
         async loadMessages() {
             try {
-                this.messages = await messageService.getByRoom(this.target._id);
+                let msgs = await messageService.getByRoom(this.target._id);
 
+                // bỏ tin nhắn mới nhất (phần tử cuối cùng)
+                if (msgs.length > 0) {
+                    msgs.pop();
+                }
 
-
-
-
+                this.messages = msgs;
+                this.scrollToBottom();
             } catch (err) {
                 console.error("Lỗi tải tin nhắn:", err);
             }
         },
+
 
         async sendMessage() {
             if (!this.newMessage.trim()) return;
@@ -70,6 +84,7 @@ export default {
                 const saved = await messageService.create(message);
                 socket.emit("sendMessage", saved);
                 this.newMessage = "";
+                this.scrollToBottom();
             } catch (err) {
                 console.error("Lỗi gửi tin nhắn:", err);
             }
@@ -84,21 +99,30 @@ export default {
     },
 
     mounted() {
-        this.loadMessages();
+        // 1. Đăng ký listener trước
+        const onMessage = (msg) => {
+            if (!this.messages.find(m => m._id === msg._id) && msg.room === this.target._id) {
+                this.messages.push(msg);
+                this.scrollToBottom();
+            }
+        };
+        this._onMessage = onMessage;
+        socket.on("receiveMessage", onMessage);
+
+        // 2. Tham gia room
         socket.emit("joinRoom", this.target._id);
 
-        socket.on("receiveMessage", (msg) => {
-            if (msg.room === this.target._id) {
-                this.messages.push(msg);
-
-            }
-        });
+        // 3. Load tin nhắn cũ
+        this.loadMessages();
     },
 
     beforeUnmount() {
-        socket.off("receiveMessage");
+        if (this._onMessage) {
+            socket.off("receiveMessage", this._onMessage); // chỉ gỡ listener này
+        }
         socket.emit("leaveRoom", this.target._id);
-    },
+    }
+
 };
 </script>
 
