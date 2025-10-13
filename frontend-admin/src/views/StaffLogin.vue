@@ -1,6 +1,6 @@
 <template>
-    <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
-        <div class="card shadow p-4" style="width: 350px;">
+    <div class="d-flex justify-content-center align-items-center vh-100 bg-light auth-card">
+        <div class="card shadow p-4 auth-card" style="width: 350px;">
             <h4 class="text-center mb-4">👨‍💼 Đăng nhập nhân viên</h4>
 
             <form @submit.prevent="handleLogin">
@@ -48,7 +48,16 @@ export default {
                 localStorage.setItem("staffToken", res.token);
                 localStorage.setItem("staffInfo", JSON.stringify(res.staff));
                 window.dispatchEvent(new Event("storage"));
-                this.$router.push("/");
+                // console.log(res.staff)
+                if (res.staff.chucVu == "Nhân viên kiểm duyệt") {
+                    this.$router.push("/borrows");
+                } else if (res.staff.chucVu == "Quản lý nhân sự") {
+                    this.$router.push("/staffs");
+                }
+                else {
+                    this.$router.push("/");
+                }
+
             } catch (err) {
                 this.error = err.response?.data?.message || "Sai tài khoản hoặc mật khẩu!";
             } finally {

@@ -131,12 +131,17 @@ export default {
             return [...new Set(this.staffs
                 .map(s => s.ngaySinh ? new Date(s.ngaySinh).getFullYear() : null)
                 .filter(Boolean)
-            )].sort((a, b) => b - a); // năm mới trước
+            )].sort((a, b) => b - a);
         },
 
         filteredStaffs() {
             const q = this.searchQuery.trim().toLowerCase();
             return this.staffs.filter(s => {
+
+                if (this.currentStaff?.chucVu !== "Admin" && s.chucVu === "Admin") {
+                    return false;
+                }
+
                 const ma = s.maNV?.toLowerCase() || "";
                 const name = s.hoTenNV?.toLowerCase() || "";
                 const position = s.chucVu?.toLowerCase() || "";
@@ -157,6 +162,7 @@ export default {
                 return matchesSearch && matchesPosition && matchesGender && matchesYear;
             });
         },
+
 
         totalPages() { return Math.ceil(this.filteredStaffs.length / this.itemsPerPage); },
         paginatedStaffs() {

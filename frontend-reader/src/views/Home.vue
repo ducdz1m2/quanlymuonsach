@@ -462,10 +462,41 @@ export default {
         goToLogin() {
             this.$router.push("/login");
         },
+        async checkNearlyExpiredBooks() {
+            if (!this.isLoggedIn || !this.borrowedBooks.length) return;
+
+            const today = new Date();
+            const almostExpired = this.borrowedBooks.filter(b => {
+                if (!b.ngayTra) return false;
+                const returnDate = new Date(b.ngayTra);
+                const diffDays = Math.ceil((returnDate - today) / (1000 * 60 * 60 * 24));
+                return diffDays > 0 && diffDays <= 3 && b.trangThai !== "Đã trả"; // còn <= 3 ngày
+            });
+
+            if (almostExpired.length) {
+                const list = almostExpired
+                    .map(b => `📘 <b>${b.bookInfo?.tenSach || 'Không rõ'}</b> — hạn trả: <b>${b.ngayTra}</b>`)
+                    .join("<br>");
+
+                Swal.fire({
+                    title: "⏰ Sách sắp đến hạn trả!",
+                    html: `
+                <p>Bạn có <b>${almostExpired.length}</b> sách gần hết hạn trả:</p>
+                <div style="text-align:left">${list}</div>
+                <hr>
+                <small>Vui lòng trả đúng hạn để tránh bị phạt nhé.</small>
+            `,
+                    icon: "warning",
+                    confirmButtonText: "Đã hiểu",
+                    confirmButtonColor: "#f59e0b",
+                });
+            }
+        },
 
         async borrowBook(book) {
             if (!this.isLoggedIn || !this.readerInfo?._id) {
                 Swal.fire("Bạn cần đăng nhập", "Vui lòng đăng nhập để mượn sách.", "info");
+                this.goToLogin();
                 return;
             }
 
@@ -526,6 +557,7 @@ export default {
         async openPaymentModal() {
             if (!this.isLoggedIn || !this.readerInfo?._id) {
                 Swal.fire("Bạn cần đăng nhập", "Vui lòng đăng nhập để xem số tiền đã tiêu.", "info");
+                this.goToLogin();
                 return;
             }
 
@@ -581,10 +613,13 @@ export default {
     mounted() {
 
         window.addEventListener("storage", this.loadReaderFromLocalStorage);
-        this.fetchBooks();
-        this.loadReaderFromLocalStorage();
 
-        this.fetchBorrowedBooks();
+        this.loadReaderFromLocalStorage();
+        this.fetchBooks();
+        this.fetchBorrowedBooks().then(() => {
+            this.checkNearlyExpiredBooks();
+        });
+
         this.socket = io("http://localhost:3000");
 
         this.socket.on("receiveMessage", (msg) => {
