@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- Header emit ra open-profile -->
+
     <Header :reader="selectedReader" @open-profile="openProfile" />
 
     <div class="d-flex flex-row">
@@ -47,7 +47,7 @@ export default {
   methods: {
 
     openProfile(readerInfo) {
-      // Khi Header emit ra sự kiện open-profile
+
       this.selectedReader = { ...readerInfo };
 
       this.showProfileModal = true;
@@ -57,7 +57,7 @@ export default {
     },
     async handleSaveProfile(updatedReader) {
       try {
-        // ✅ Bỏ mật khẩu trước khi lưu
+
         const { password, matKhau, ...safeData } = updatedReader;
 
         await readerService.updateProfile(updatedReader._id, safeData);
@@ -70,7 +70,7 @@ export default {
       }
     },
 
-    // 👇 Hàm đồng bộ thông tin reader
+
     async fetchReader() {
       try {
         const readerInfo = JSON.parse(localStorage.getItem("readerInfo"));
@@ -80,7 +80,7 @@ export default {
         if (latestReader) {
           this.selectedReader = latestReader;
           localStorage.setItem("readerInfo", JSON.stringify(latestReader));
-          // console.log("🔁 Hồ sơ độc giả đã được đồng bộ:", latestReader);
+
         }
       } catch (error) {
         console.error("❌ Lỗi khi tải lại thông tin độc giả:", error);

@@ -147,7 +147,7 @@ export default {
     },
     computed: {
         nextStatus() {
-            // Nếu đang quá hạn => chỉ cho phép chuyển sang "Đã trả"
+
             if (this.currentStatus === "Quá hạn") {
                 return ["Đã trả"];
             }

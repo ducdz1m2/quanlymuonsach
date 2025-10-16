@@ -108,7 +108,6 @@ class StaffService {
 
     delete staff.password;
 
-    // 🔑 Tạo token
     const token = generateToken({ ...staff, role: "staff" });
 
     return { ...staff, token };

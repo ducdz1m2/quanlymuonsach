@@ -1,7 +1,7 @@
 const ApiError = require("../api-error");
 const PublisherService = require("../services/publisher.service");
 const MongoDB = require("../utils/mongodb.util");
-const BookService = require("../services/book.service"); // cần có
+const BookService = require("../services/book.service");
 const { ObjectId } = require("mongodb");
 
 exports.create = async (req, res, next) => {
@@ -111,11 +111,11 @@ exports.deleteAll = async (_req, res) => {
 
     for (const publisher of allPublishers) {
       const books = await bookService.find({ maNXB: publisher._id });
-      if (books.length > 0) continue; // Bỏ qua NXB còn sách
-      await publisherService.delete(publisher._id); // Xóa NXB
+      if (books.length > 0) continue;
+      await publisherService.delete(publisher._id);
     }
 
-    return res.sendStatus(200); // Xong tất cả
+    return res.sendStatus(200);
   } catch (error) {
     console.error("Lỗi xóa tất cả NXB:", error);
     return res.sendStatus(200);

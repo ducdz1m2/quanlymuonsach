@@ -34,65 +34,64 @@
         </ul>
     </div>
 </template>
-
-<script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+<script>
 import { io } from "socket.io-client";
 
-const emit = defineEmits(["openChat"]);
+export default {
+    name: "NotificationDropdown",
 
-const notifications = ref([]);
-const unreadCount = ref(0);
+    data() {
+        return {
+            notifications: [],
+            unreadCount: 0,
+            socket: null,
+        };
+    },
 
-// ⚙️ Kết nối socket tới backend
-const socket = io("http://localhost:3000");
+    methods: {
+        handleNotificationClick(item) {
+            item.is_read = true;
+            this.unreadCount = this.notifications.filter((n) => !n.is_read).length;
+            this.$emit("openChat", item.roomId);
+        },
 
-// 🧠 Lắng nghe tin nhắn mới realtime
-onMounted(() => {
-    socket.on("receiveMessage", (msg) => {
-        console.log("🔔 Tin nhắn mới:", msg);
+        markAllAsRead() {
+            this.notifications.forEach((n) => (n.is_read = true));
+            this.unreadCount = 0;
+        },
 
-        // ✅ Thêm vào danh sách thông báo
-        notifications.value.unshift({
-            title: "Tin nhắn mới",
-            message: `Từ ${msg.sender}: ${msg.text}`,
-            created_at: new Date(),
-            is_read: false,
-            roomId: msg.room,
+        clearAll() {
+            this.notifications = [];
+            this.unreadCount = 0;
+        },
+
+        formatDate(date) {
+            return new Date(date).toLocaleString("vi-VN");
+        },
+    },
+
+    mounted() {
+        this.socket = io("http://localhost:3000");
+
+        this.socket.on("receiveMessage", (msg) => {
+            this.notifications.unshift({
+                title: "Tin nhắn mới",
+                message: `Từ ${msg.sender}: ${msg.text}`,
+                created_at: new Date(),
+                is_read: false,
+                roomId: msg.room,
+            });
+
+            this.unreadCount++;
         });
+    },
 
-        // ✅ Tăng badge
-        unreadCount.value++;
-    });
-});
-
-onBeforeUnmount(() => {
-    socket.off("receiveMessage");
-});
-
-// 🖱 Khi click vào thông báo
-const handleNotificationClick = (item) => {
-    item.is_read = true;
-    unreadCount.value = notifications.value.filter(n => !n.is_read).length;
-
-    // ✅ Gửi sự kiện mở chat lên component cha
-    emit("openChat", item.roomId);
+    beforeUnmount() {
+        if (this.socket) {
+            this.socket.off("receiveMessage");
+        }
+    },
 };
-
-// ✅ Đánh dấu tất cả đã đọc
-const markAllAsRead = () => {
-    notifications.value.forEach(n => (n.is_read = true));
-    unreadCount.value = 0;
-};
-
-// 🗑 Xóa tất cả
-const clearAll = () => {
-    notifications.value = [];
-    unreadCount.value = 0;
-};
-
-// 🕒 Định dạng thời gian
-const formatDate = (date) => new Date(date).toLocaleString("vi-VN");
 </script>
 
 <style scoped>

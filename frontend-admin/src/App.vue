@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- Header bây giờ emit ra open-profile -->
+
     <Header :staff="selectedStaff" @open-profile="openProfile" />
 
 
@@ -13,7 +13,6 @@
 
     <Footer />
 
-    <!-- Modal hiển thị StaffForm -->
     <div v-if="showProfileModal" class="modal-backdrop" @click.self="closeProfile">
       <div class="modal-dialog">
         <div class="modal-content p-4">
@@ -39,20 +38,17 @@ export default {
     return {
       showProfileModal: false,
       selectedStaff: {},
-      chatNotifications: reactive({}), // 🔹 đặt ở đây
+      chatNotifications: reactive({}),
       sender: null,
     };
   },
   mounted() {
     this.fetchStaff();
 
-    // Lấy thông tin sender
     this.sender = JSON.parse(localStorage.getItem("staffInfo")) || {};
 
-    // Socket lắng nghe tin nhắn
     socket.on("receiveMessage", this.handleIncomingMessage);
 
-    // Provide để các component con dùng
     provide("chatNotifications", this.chatNotifications);
     provide("sender", this.sender);
   },
@@ -118,14 +114,14 @@ export default {
 }
 
 .modal-dialog {
-  /* background: white; */
+
   border-radius: 12px;
   width: 480px;
-  /* 👈 nhỏ lại */
+
   max-height: 85vh;
-  /* 👈 tránh tràn màn hình */
+
   overflow-y: auto;
-  /* 👈 thêm cuộn */
+
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   padding: 1rem;
 }

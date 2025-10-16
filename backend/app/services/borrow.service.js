@@ -262,8 +262,6 @@ class BorrowService {
     return results[0];
   }
 
-  // Lấy danh sách chi tiết phiếu mượn
-  // Lấy danh sách chi tiết phiếu mượn (có tính tiền)
   async findAllDetails() {
     await this.markOverdueBorrows(); // cập nhật quá hạn trước khi lấy
 

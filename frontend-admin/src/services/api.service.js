@@ -13,7 +13,6 @@ export default (baseURL) => {
     ...commonConfig,
   });
 
-  // ✅ Thêm interceptor để tự động đính token
   instance.interceptors.request.use((config) => {
     const token = localStorage.getItem("staffToken");
     if (token) {

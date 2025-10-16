@@ -16,7 +16,7 @@
 <script setup>
 import { ref } from "vue";
 import NotificationService from "@/services/notification.service";
-import ReaderService from "@/services/reader.service"; // giả sử bạn có service cho reader
+import ReaderService from "@/services/reader.service";
 
 const readers = ref([]);
 const receiver_id = ref("");

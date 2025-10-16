@@ -194,8 +194,10 @@ export default {
         closeForm() { this.showForm = false; this.editingStaff = null; },
 
         async handleSave(staff) {
+
             try {
                 if (staff._id) await staffService.update(staff._id, staff);
+
                 else await staffService.create(staff);
                 await this.fetchStaffs();
             } catch (err) {

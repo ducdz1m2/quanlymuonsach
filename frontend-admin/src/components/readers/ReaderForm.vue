@@ -29,6 +29,16 @@
                     <span v-else>Tên phải có ít nhất 2 ký tự</span>
                 </div>
             </div>
+            <!-- Mật khẩu -->
+            <div class="mb-3">
+                <label class="form-label">Mật khẩu</label>
+                <input type="password" class="form-control" v-model="localReader.password"
+                    :class="{ 'is-invalid': v$.localReader.password.$error }" />
+                <div v-if="v$.localReader.password.$error" class="text-danger">
+                    <span v-if="!v$.localReader.password.required">Vui lòng nhập mật khẩu</span>
+                    <span v-else>Mật khẩu phải có ít nhất 6 ký tự</span>
+                </div>
+            </div>
 
             <!-- Ngày sinh -->
             <div class="mb-3">
@@ -112,6 +122,7 @@ export default {
                 maDG: "",
                 hoLot: "",
                 ten: "",
+                password: "",
                 ngaySinh: "",
                 phai: "",
                 diaChi: "",
@@ -130,6 +141,7 @@ export default {
             maDG: {}, // readonly, backend tự sinh
             hoLot: { required, minLength: minLength(2) },
             ten: { required, minLength: minLength(2) },
+            password: { required, minLength: minLength(6) },
             ngaySinh: {
                 required,
                 minAge12: helpers.withMessage(

@@ -4,7 +4,7 @@ const MongoDB = require("../utils/mongodb.util");
 const jwt = require("jsonwebtoken");
 const SECRET_KEY = process.env.JWT_SECRET || "library_secret";
 
-// 🟢 Đăng nhập nhân viên
+//Đăng nhập nhân viên
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -32,7 +32,7 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// 🟢 Tạo nhân viên mới
+//Tạo nhân viên mới
 exports.create = async (req, res, next) => {
   if (!req.body?.hoTenNV) {
     return next(new ApiError(400, "Tên nhân viên không thể để trống."));
@@ -46,7 +46,7 @@ exports.create = async (req, res, next) => {
   }
 };
 
-// 🟢 Lấy danh sách nhân viên
+//Lấy danh sách nhân viên
 exports.findAll = async (_req, res, next) => {
   try {
     const staffService = new StaffService(MongoDB.client);
@@ -59,7 +59,7 @@ exports.findAll = async (_req, res, next) => {
   }
 };
 
-// 🟢 Tìm theo ID
+//Tìm theo ID
 exports.findOne = async (req, res, next) => {
   try {
     const staffService = new StaffService(MongoDB.client);
@@ -78,7 +78,7 @@ exports.findOne = async (req, res, next) => {
   }
 };
 
-// 🟢 Cập nhật nhân viên
+//Cập nhật nhân viên
 exports.update = async (req, res, next) => {
   if (!req.body || Object.keys(req.body).length === 0) {
     return next(new ApiError(400, "Dữ liệu cập nhật không được để trống."));
@@ -100,7 +100,7 @@ exports.update = async (req, res, next) => {
   }
 };
 
-// 🟢 Xóa 1 nhân viên
+//Xóa 1 nhân viên
 exports.delete = async (req, res, next) => {
   try {
     const staffService = new StaffService(MongoDB.client);
@@ -116,7 +116,7 @@ exports.delete = async (req, res, next) => {
   }
 };
 
-// 🟢 Xóa tất cả nhân viên
+//Xóa tất cả nhân viên
 exports.deleteAll = async (_req, res, next) => {
   try {
     const staffService = new StaffService(MongoDB.client);

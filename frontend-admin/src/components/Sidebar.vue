@@ -58,7 +58,7 @@ export default {
             let items = [];
 
             if (this.role === 'Admin') items = this.menuItems.filter(item => item.text !== 'Trợ giúp');
-            else if (this.role === 'Thủ thư') items = this.menuItems.filter(item => ['/', '/books', '/borrows', '/readers'].includes(item.route));
+            else if (this.role === 'Thủ thư') items = this.menuItems.filter(item => ['/', '/books', '/borrows', '/readers', '/publishers'].includes(item.route));
             else if (this.role === 'Nhân viên kiểm duyệt') items = this.menuItems.filter(item => ['/borrows'].includes(item.route));
             else if (this.role === 'Quản lý nhân sự') items = this.menuItems.filter(item => ['/staffs'].includes(item.route));
 

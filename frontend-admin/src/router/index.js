@@ -21,7 +21,7 @@ const routes = [
     component: Dashboard,
     meta: {
       requiresAuth: true,
-      allowedRoles: ["Admin", "Thủ thư"], // chỉ Admin & Thủ thư
+      allowedRoles: ["Admin", "Thủ thư"],
     },
   },
   {
@@ -48,7 +48,7 @@ const routes = [
     component: Publisher,
     meta: {
       requiresAuth: true,
-      allowedRoles: ["Admin"], // chỉ Admin
+      allowedRoles: ["Admin", "Thủ thư"],
     },
   },
   {
@@ -57,7 +57,7 @@ const routes = [
     component: Reader,
     meta: {
       requiresAuth: true,
-      allowedRoles: ["Admin", "Thủ thư"], // chỉ Admin
+      allowedRoles: ["Admin", "Thủ thư"],
     },
   },
   {
@@ -81,11 +81,10 @@ const router = createRouter({
   routes,
 });
 
-// ✅ Middleware kiểm tra đăng nhập và quyền
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("staffToken");
   const staffInfo = JSON.parse(localStorage.getItem("staffInfo") || "{}");
-  const role = staffInfo.chucVu; // ✅ lấy từ DB
+  const role = staffInfo.chucVu;
   const isAuthenticated = !!token;
 
   if (to.meta.requiresAuth && !isAuthenticated) {

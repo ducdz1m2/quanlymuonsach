@@ -36,46 +36,45 @@
     </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
+<script>
+export default {
+    name: "NotificationDropdown",
 
-const emit = defineEmits(["openChat"]);
+    data() {
+        return {
+            notifications: [],
+            unreadCount: 0,
+        };
+    },
 
-const notifications = ref([
-    // ✅ Bạn có thể thêm dữ liệu mẫu tạm thời nếu cần
-    // { title: "Thông báo 1", message: "Nội dung 1", created_at: new Date(), is_read: false },
-]);
-const unreadCount = ref(0);
+    methods: {
+        markAllAsRead() {
+            this.notifications.forEach((n) => (n.is_read = true));
+            this.unreadCount = 0;
+        },
 
-// 🔘 Khi mở dropdown — đánh dấu tất cả đã đọc
-const markAllAsRead = () => {
-    notifications.value.forEach(n => (n.is_read = true));
-    unreadCount.value = 0;
+        handleNotificationClick(item) {
+            item.is_read = true;
+            this.unreadCount = this.notifications.filter((n) => !n.is_read).length;
+            this.$emit("openChat", item);
+        },
+
+        clearAll() {
+            this.notifications = [];
+            this.unreadCount = 0;
+        },
+
+        formatDate(date) {
+            return new Date(date).toLocaleString("vi-VN");
+        },
+    },
+
+    mounted() {
+        this.unreadCount = this.notifications.filter((n) => !n.is_read).length;
+    },
 };
-
-// ✅ Khi nhấp vào một thông báo
-const handleNotificationClick = (item) => {
-    item.is_read = true;
-    unreadCount.value = notifications.value.filter(n => !n.is_read).length;
-    emit("openChat", item);
-};
-
-// 🗑 Xóa tất cả thông báo
-const clearAll = () => {
-    notifications.value = [];
-    unreadCount.value = 0;
-};
-
-// 🕒 Định dạng thời gian
-const formatDate = (date) => new Date(date).toLocaleString("vi-VN");
-
-onMounted(() => {
-    // Không còn fetch từ API nữa
-    // Bạn có thể gắn dữ liệu giả lập ở đây nếu cần
-    // notifications.value = [...]
-    unreadCount.value = notifications.value.filter(n => !n.is_read).length;
-});
 </script>
+
 
 <style scoped>
 .dropdown-item.bg-light:hover {

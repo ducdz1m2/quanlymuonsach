@@ -49,7 +49,7 @@
                 <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
             </div>
 
-            <div class="col-auto ms-auto">
+            <div v-if="this.isLoggedIn" class="col-auto ms-auto">
                 <button class="btn btn-outline-info" @click="openPaymentModal" :disabled="!isLoggedIn">
                     💳 Xem đã tiêu
                 </button>
@@ -168,67 +168,65 @@
         </div>
 
     </div>
-    <!-- Bảng sách đang mượn -->
+    <!-- 🔍 Tìm kiếm phiếu mượn -->
     <div v-if="isLoggedIn" class="mt-5">
-        <h4 class="mb-3">📘 Sách bạn đang mượn</h4>
+        <h4 class="mb-3">🔍 Tìm kiếm phiếu mượn</h4>
 
+        <div class="row g-2 mb-3 align-items-center">
+            <div class="col-auto">
+                <input type="text" class="form-control" placeholder="Tìm theo mã mượn hoặc tên sách..."
+                    v-model="borrowSearchQuery" />
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select" v-model="borrowSelectedStatus">
+                    <option value="">📌 Tất cả trạng thái</option>
+                    <option v-for="s in uniqueBorrowStatuses" :key="s" :value="s">{{ s }}</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <select class="form-select" v-model="borrowSelectedYear">
+                    <option value="">📅 Tất cả năm mượn</option>
+                    <option v-for="y in uniqueBorrowYears" :key="y" :value="y">{{ y }}</option>
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <button class="btn btn-secondary" @click="resetBorrowFilters">↺ Reset</button>
+            </div>
+        </div>
+
+        <!-- Bảng kết quả tìm kiếm -->
         <div class="table-responsive">
             <table class="table table-bordered table-hover text-center align-middle">
                 <thead class="table-secondary">
                     <tr>
-                        <th>#</th>
+                        <th>Mã mượn</th>
                         <th>Tên sách</th>
                         <th>Ngày mượn</th>
                         <th>Ngày trả</th>
                         <th>Trạng thái</th>
-                        <th>Tổng tiền</th>
-                        <th>Thao tác</th>
+                        <th>Phí (₫)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-if="borrowLoading">
-                        <td colspan="6">⏳ Đang tải...</td>
+                    <tr v-if="filteredBorrows.length === 0">
+                        <td colspan="6">Không có phiếu mượn phù hợp.</td>
                     </tr>
-
-                    <tr v-else-if="!borrowedBooks.length">
-                        <td colspan="6">Bạn chưa mượn sách nào.</td>
-                    </tr>
-
-                    <tr v-else v-for="(b, i) in borrowedBooks" :key="b._id">
-                        <td>{{ i + 1 }}</td>
+                    <tr v-for="b in filteredBorrows" :key="b._id">
+                        <td class="text-start">{{ b.maMuon || '(Không có mã)' }}</td>
                         <td class="text-start">{{ b.bookInfo?.tenSach || 'Không rõ' }}</td>
-
                         <td>{{ b.ngayMuon }}</td>
                         <td>{{ b.ngayTra }}</td>
-                        <td>
-                            <span :class="getBadgeClass(b.trangThai)">
-                                {{ b.trangThai }}
-                            </span>
-                        </td>
-                        <td>
-                            {{
-                                b.bookInfo?.donGia != null
-                                    ? formatMoney(
-                                        ((b.bookInfo.donGia || 0) * (b.quantity || 1) *
-                                            (Math.ceil((new Date(b.ngayTra) - new Date(b.ngayMuon)) / (1000 * 60 * 60 * 24)) || 1)
-                                        ) + (b.penalty || 0)
-                                    )
-                                    : '-'
-                            }}
-                        </td>
-
-                        <td>
-                            <button class="btn btn-sm btn-outline-info" @click="viewBookDetail(b.bookInfo)"
-                                :disabled="!b.bookInfo">
-                                Xem sách
-                            </button>
-
-                        </td>
+                        <td><span :class="getBadgeClass(b.trangThai)">{{ b.trangThai }}</span></td>
+                        <td>{{ formatMoney(b.bookInfo?.donGia || 0) }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
+
 
 
     <div v-if="showDetailModal" class="modal-backdrop" @click.self="closeDetailModal">
@@ -284,6 +282,9 @@ export default {
             chatNotifications: {},
             borrowedBooks: [],
             borrowLoading: false,
+            borrowSearchQuery: "",
+            borrowSelectedStatus: "",
+            borrowSelectedYear: "",
 
             books: [],
             searchQuery: "",
@@ -312,6 +313,32 @@ export default {
         };
     },
     computed: {
+        uniqueBorrowStatuses() {
+            return [...new Set(this.borrowedBooks.map(b => b.trangThai).filter(Boolean))];
+        },
+        uniqueBorrowYears() {
+            return [...new Set(
+                this.borrowedBooks
+                    .map(b => b.ngayMuon ? new Date(b.ngayMuon).getFullYear() : null)
+                    .filter(Boolean)
+            )].sort((a, b) => b - a);
+        },
+        filteredBorrows() {
+            const q = this.borrowSearchQuery.trim().toLowerCase();
+
+            return this.borrowedBooks.filter((b) => {
+                const maMuon = b.maMuon?.toLowerCase() || "";
+                const tenSach = b.bookInfo?.tenSach?.toLowerCase() || "";
+
+                const matchesSearch = !q || maMuon.includes(q) || tenSach.includes(q);
+                const matchesStatus = !this.borrowSelectedStatus || b.trangThai === this.borrowSelectedStatus;
+
+                const year = b.ngayMuon ? new Date(b.ngayMuon).getFullYear() : null;
+                const matchesYear = !this.borrowSelectedYear || year == this.borrowSelectedYear;
+
+                return matchesSearch && matchesStatus && matchesYear;
+            });
+        },
         uniqueCategories() {
             return [...new Set(this.books.map((b) => b.theLoai).filter(Boolean))];
         },
@@ -361,6 +388,11 @@ export default {
         },
     },
     methods: {
+        resetBorrowFilters() {
+            this.borrowSearchQuery = "";
+            this.borrowSelectedStatus = "";
+            this.borrowSelectedYear = "";
+        },
         openChat(readerInfo) {
             this.selectedReader = readerInfo;
             this.showChat = true;

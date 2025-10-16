@@ -29,8 +29,6 @@
 import { socket } from "@/services/socket";
 import messageService from "@/services/message.service";
 
-// ⚙️ Kết nối Socket.IO tới backend
-
 
 export default {
     props: {
@@ -90,7 +88,7 @@ export default {
             }
         },
 
-        // 🔹 Ẩn tất cả tin nhắn khỏi giao diện (client-side)
+
         clearMessages() {
 
             this.messages = [];
@@ -99,7 +97,7 @@ export default {
     },
 
     mounted() {
-        // 1. Đăng ký listener trước
+
         const onMessage = (msg) => {
             if (!this.messages.find(m => m._id === msg._id) && msg.room === this.target._id) {
                 this.messages.push(msg);
@@ -109,16 +107,14 @@ export default {
         this._onMessage = onMessage;
         socket.on("receiveMessage", onMessage);
 
-        // 2. Tham gia room
         socket.emit("joinRoom", this.target._id);
 
-        // 3. Load tin nhắn cũ
         this.loadMessages();
     },
 
     beforeUnmount() {
         if (this._onMessage) {
-            socket.off("receiveMessage", this._onMessage); // chỉ gỡ listener này
+            socket.off("receiveMessage", this._onMessage);
         }
         socket.emit("leaveRoom", this.target._id);
     }

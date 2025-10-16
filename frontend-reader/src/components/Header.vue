@@ -35,14 +35,13 @@ export default {
         return {
             showChat: false,
             isLoggedIn: false,
-            readerInfo: null, // thêm readerInfo reactive
+            readerInfo: null,
         };
     },
     mounted() {
 
         this.checkLoginStatus();
 
-        // Lắng nghe event khi login hoặc logout
         window.addEventListener("storage", this.checkLoginStatus);
     },
     beforeUnmount() {
@@ -52,7 +51,7 @@ export default {
     watch: {
         reader: {
             handler(newVal) {
-                // Khi App.vue cập nhật reader, Header tự nhận thay đổi
+
                 if (newVal && Object.keys(newVal).length > 0) {
                     this.isLoggedIn = true;
                     this.readerInfo = newVal;
@@ -86,12 +85,9 @@ export default {
         },
 
         handleLogout() {
-            readerService.logout(); // Xóa token + thông tin người dùng
-
-            // 🔁 Thông báo cho toàn app (App.vue, Sidebar, v.v.)
+            readerService.logout();
             window.dispatchEvent(new Event("storage"));
 
-            // 🔙 Chuyển hướng về trang đăng nhập
             this.$router.push("/login");
         },
     },

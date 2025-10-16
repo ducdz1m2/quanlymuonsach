@@ -269,7 +269,7 @@ exports.login = async (req, res, next) => {
   const readerService = new ReaderService(MongoDB.client);
 
   try {
-    const reader = await readerService.login(dienThoai, password); // ✅ thêm await
+    const reader = await readerService.login(dienThoai, password);
 
     if (!reader) {
       return res

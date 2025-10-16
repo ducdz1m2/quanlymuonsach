@@ -7,7 +7,7 @@ class StaffService {
 
   async login(email, password) {
     const res = await this.api.post("/login", { email, password });
-    // Lưu token và thông tin nhân viên
+
     localStorage.setItem("staffToken", res.data.token);
     localStorage.setItem("staffInfo", JSON.stringify(res.data.staff));
     return res.data;

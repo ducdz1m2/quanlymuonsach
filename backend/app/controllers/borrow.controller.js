@@ -12,7 +12,7 @@ exports.create = async (req, res, next) => {
 
   try {
     const borrowService = new BorrowService(MongoDB.client);
-    await borrowService.markOverdueBorrows(); // Cập nhật phiếu quá hạn trước
+    await borrowService.markOverdueBorrows();
 
     const document = await borrowService.create(req.body);
     return res.send(document);
