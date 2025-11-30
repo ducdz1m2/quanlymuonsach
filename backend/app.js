@@ -23,7 +23,7 @@ app.use(
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"], // ✅ Cho phép gửi Authorization header
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  })
+  }),
 );
 
 app.use(express.json({ limit: "10mb" }));
@@ -38,9 +38,10 @@ app.get("/", (req, res) => {
 app.post("/api/staffs/login", staffController.login);
 app.post(
   "/api/readers/login",
-  require("./app/controllers/reader.controller").login
+  require("./app/controllers/reader.controller").login,
 );
 app.post("/api/readers", require("./app/controllers/reader.controller").create);
+
 app.use("/api/books", bookRouter);
 // 🧱 Các route còn lại đều cần token
 app.use(verifyToken);

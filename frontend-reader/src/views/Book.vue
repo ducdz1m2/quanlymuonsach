@@ -1,9 +1,8 @@
 <template>
     <div class="p-4">
-        <h1 class="mb-4">📚 Quản lý sách</h1>
+        <h1 class="mb-4">📚 Danh sách sách</h1>
 
-        <!-- Thanh công cụ -->
-        <!-- Thanh công cụ -->
+        <!-- Thanh công cụ tìm kiếm và lọc -->
         <div class="row g-2 mb-3 align-items-center">
             <div class="col-auto">
                 <input
@@ -41,7 +40,6 @@
                 </select>
             </div>
 
-            <!-- Filter theo đơn giá -->
             <!-- Sắp xếp theo đơn giá -->
             <div class="col-auto">
                 <select class="form-select" v-model="sortBy">
@@ -67,15 +65,9 @@
                     ↺ Reset
                 </button>
             </div>
-
-            <div class="col-auto">
-                <button class="btn btn-primary" @click="openAddModal">
-                    + Thêm sách
-                </button>
-            </div>
         </div>
 
-        <!-- Bảng danh sách -->
+        <!-- Bảng danh sách sách -->
         <div class="table-responsive">
             <table
                 class="table table-bordered table-hover text-center align-middle"
@@ -92,7 +84,6 @@
                         <th>Mô tả</th>
                         <th>Nhà xuất bản</th>
                         <th>Ảnh bìa</th>
-                        <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -128,22 +119,7 @@
                                 class="rounded shadow-sm"
                             />
                         </td>
-                        <td>
-                            <button
-                                class="btn btn-sm btn-warning me-2"
-                                @click="openEditModal(book)"
-                            >
-                                Sửa
-                            </button>
-                            <button
-                                class="btn btn-sm btn-danger"
-                                @click="deleteBook(book._id)"
-                            >
-                                Xóa
-                            </button>
-                        </td>
                     </tr>
-
                     <tr v-if="!loading && paginatedBooks.length === 0">
                         <td colspan="10">Không có sách phù hợp</td>
                     </tr>
@@ -177,30 +153,13 @@
                 Sau ▶
             </button>
         </div>
-
-        <!-- Modal thêm/sửa -->
-        <div v-if="showForm" class="modal-backdrop" @click.self="closeForm">
-            <div class="modal-content p-4">
-                <h5>{{ editingBook ? "✏️ Sửa sách" : "➕ Thêm sách" }}</h5>
-                <BookForm
-                    :book="editingBook"
-                    @save="handleSave"
-                    @delete="handleDelete"
-                    @cancel="closeForm"
-                />
-            </div>
-        </div>
     </div>
 </template>
 
 <script>
-import BookService from "@/services/book.service";
-import BookForm from "@/components/books/BookForm.vue";
-import Swal from "sweetalert2";
+import BookService from "@/services/book.service"; // Giả sử BookService đã có sẵn và phù hợp
 
 export default {
-    components: { BookForm },
-
     data() {
         return {
             books: [],
@@ -211,25 +170,10 @@ export default {
             sortBy: "", // "price"
             sortOrder: "desc", // "asc" | "desc"
             loading: false,
-            showForm: false,
-            editingBook: null,
             currentPage: 1,
             itemsPerPage: 5,
         };
     },
-
-    methods: {
-        resetFilters() {
-            this.searchQuery = "";
-            this.selectedCategory = "";
-            this.selectedYear = "";
-            this.selectedPublisher = "";
-            this.sortBy = "";
-            this.sortOrder = "desc";
-            this.currentPage = 1;
-        },
-    },
-
     computed: {
         uniqueCategories() {
             return [
@@ -246,7 +190,6 @@ export default {
                 ...new Set(this.books.map((b) => b.tenNXB).filter(Boolean)),
             ];
         },
-
         filteredBooks() {
             const q = this.searchQuery.trim().toLowerCase();
 
@@ -277,7 +220,7 @@ export default {
                 );
             });
 
-            // ✅ Sắp xếp theo đơn giá
+            // Sắp xếp theo đơn giá
             if (this.sortBy === "price") {
                 result.sort((a, b) => {
                     const valA = a.donGia || 0;
@@ -288,7 +231,6 @@ export default {
 
             return result;
         },
-
         totalPages() {
             return Math.ceil(this.filteredBooks.length / this.itemsPerPage);
         },
@@ -297,18 +239,16 @@ export default {
             return this.filteredBooks.slice(start, start + this.itemsPerPage);
         },
     },
-
     methods: {
         resetFilters() {
             this.searchQuery = "";
             this.selectedCategory = "";
             this.selectedYear = "";
             this.selectedPublisher = "";
-            this.sortBy = ""; // reset chọn loại sắp xếp
-            this.sortOrder = "desc"; // reset về mặc định
+            this.sortBy = "";
+            this.sortOrder = "desc";
             this.currentPage = 1;
         },
-
         async fetchBooks() {
             this.loading = true;
             try {
@@ -320,136 +260,13 @@ export default {
                 this.loading = false;
             }
         },
-
         prevPage() {
             if (this.currentPage > 1) this.currentPage--;
         },
         nextPage() {
             if (this.currentPage < this.totalPages) this.currentPage++;
         },
-
-        openAddModal() {
-            this.editingBook = null;
-            this.showForm = true;
-        },
-        openEditModal(book) {
-            this.editingBook = { ...book };
-            this.showForm = true;
-        },
-        closeForm() {
-            this.showForm = false;
-            this.editingBook = null;
-        },
-
-        async handleSave(book) {
-            try {
-                if (book._id) {
-                    await BookService.update(book._id, book);
-                } else {
-                    await BookService.create(book);
-                }
-                await this.fetchBooks();
-                this.closeForm();
-
-                Swal.fire({
-                    icon: "success",
-                    title: book._id
-                        ? "Cập nhật thành công!"
-                        : "Thêm thành công!",
-                    text: book.tenSach,
-                    showConfirmButton: false,
-                    timer: 1500,
-                    toast: true,
-                    position: "top-end",
-                    customClass: { popup: "swal-popup-responsive" },
-                });
-            } catch (err) {
-                console.error("Lỗi lưu sách:", err);
-                Swal.fire("❌ Lỗi!", "Không thể lưu sách.", "error");
-            }
-        },
-
-        async deleteBook(id) {
-            const book = this.books.find((b) => b._id === id);
-            const result = await Swal.fire({
-                title: "Bạn có chắc muốn xóa?",
-                text: `Sách: ${book.tenSach}`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Xóa",
-                cancelButtonText: "Hủy",
-                confirmButtonColor: "#d33",
-                cancelButtonColor: "#3085d6",
-                customClass: { popup: "swal-popup-responsive" },
-            });
-
-            if (result.isConfirmed) {
-                try {
-                    await BookService.delete(id);
-                    await this.fetchBooks();
-                    Swal.fire({
-                        icon: "success",
-                        title: "Đã xóa!",
-                        timer: 1500,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: "top-end",
-                        customClass: { popup: "swal-popup-responsive" },
-                    });
-                } catch (err) {
-                    console.error("Lỗi khi xóa:", err);
-
-                    // ✅ Thêm check lỗi từ backend
-                    if (
-                        err.response &&
-                        err.response.data &&
-                        err.response.data.message
-                    ) {
-                        Swal.fire(
-                            "❌ Không thể xóa!",
-                            err.response.data.message,
-                            "warning",
-                        );
-                    } else {
-                        Swal.fire("❌ Lỗi!", "Không thể xóa sách.", "error");
-                    }
-                }
-            }
-        },
-
-        async handleDelete(book) {
-            try {
-                await BookService.delete(book._id);
-                await this.fetchBooks();
-                this.closeForm();
-                Swal.fire({
-                    icon: "success",
-                    title: "Đã xóa!",
-                    timer: 1500,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: "top-end",
-                });
-            } catch (err) {
-                console.error(err);
-
-                if (
-                    err.response &&
-                    err.response.data &&
-                    err.response.data.message
-                ) {
-                    Swal.fire(
-                        "❌ Không thể xóa!",
-                        err.response.data.message,
-                        "warning",
-                    );
-                } else {
-                    Swal.fire("❌ Lỗi!", "Không thể xóa sách.", "error");
-                }
-            }
-        },
     },
-
     mounted() {
         this.fetchBooks();
     },
@@ -463,61 +280,5 @@ export default {
 
 .table img {
     object-fit: cover;
-}
-
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
-    padding: 10px;
-}
-
-.modal-content {
-    /* background: white; */
-    border-radius: 10px;
-    width: 600px;
-    max-width: 95%;
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: 25px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-@media (max-width: 768px) {
-    .modal-content {
-        width: 100%;
-        padding: 20px;
-    }
-}
-
-/* SweetAlert responsive */
-.swal-popup-responsive {
-    width: 90% !important;
-    max-width: 400px !important;
-    font-size: 14px !important;
-}
-
-@media (min-width: 768px) {
-    .swal-popup-responsive {
-        width: 400px !important;
-        font-size: 16px !important;
-    }
-}
-
-/* Toast nhỏ cho mobile */
-.swal2-toast {
-    font-size: 13px !important;
-    min-width: 180px !important;
-}
-
-@media (max-width: 480px) {
-    .swal2-toast {
-        font-size: 12px !important;
-        min-width: 150px !important;
-    }
 }
 </style>

@@ -3,8 +3,12 @@
         <form @submit.prevent="handleSubmit" novalidate>
             <div class="mb-3">
                 <label class="form-label">Mã sách</label>
-                <input type="text" v-model="localBook.maSach" class="form-control"
-                    :class="{ 'is-invalid': v$.localBook.maSach.$error }" />
+                <input
+                    type="text"
+                    v-model="localBook.maSach"
+                    class="form-control"
+                    :class="{ 'is-invalid': v$.localBook.maSach.$error }"
+                />
                 <div v-if="v$.localBook.maSach.$error" class="text-danger">
                     Vui lòng nhập mã sách
                 </div>
@@ -12,8 +16,12 @@
             <!-- Tên sách -->
             <div class="mb-3">
                 <label class="form-label">Tên sách</label>
-                <input type="text" v-model="localBook.tenSach" class="form-control"
-                    :class="{ 'is-invalid': v$.localBook.tenSach.$error }" />
+                <input
+                    type="text"
+                    v-model="localBook.tenSach"
+                    class="form-control"
+                    :class="{ 'is-invalid': v$.localBook.tenSach.$error }"
+                />
                 <div v-if="v$.localBook.tenSach.$error" class="text-danger">
                     Vui lòng nhập tên sách
                 </div>
@@ -22,8 +30,12 @@
             <!-- Tác giả -->
             <div class="mb-3">
                 <label class="form-label">Tác giả</label>
-                <input type="text" v-model="localBook.tacGia" class="form-control"
-                    :class="{ 'is-invalid': v$.localBook.tacGia.$error }" />
+                <input
+                    type="text"
+                    v-model="localBook.tacGia"
+                    class="form-control"
+                    :class="{ 'is-invalid': v$.localBook.tacGia.$error }"
+                />
                 <div v-if="v$.localBook.tacGia.$error" class="text-danger">
                     Vui lòng nhập tác giả
                 </div>
@@ -32,10 +44,17 @@
             <!-- Số lượng -->
             <div class="mb-3">
                 <label class="form-label">Số lượng</label>
-                <input type="number" v-model.number="localBook.soQuyen" class="form-control" min="0"
-                    :class="{ 'is-invalid': v$.localBook.soQuyen.$error }" />
+                <input
+                    type="number"
+                    v-model.number="localBook.soQuyen"
+                    class="form-control"
+                    min="0"
+                    :class="{ 'is-invalid': v$.localBook.soQuyen.$error }"
+                />
                 <div v-if="v$.localBook.soQuyen.$error" class="text-danger">
-                    <span v-if="!v$.localBook.soQuyen.required">Vui lòng nhập số lượng</span>
+                    <span v-if="!v$.localBook.soQuyen.required"
+                        >Vui lòng nhập số lượng</span
+                    >
                     <span v-else>Số lượng phải lớn hơn hoặc bằng 0</span>
                 </div>
             </div>
@@ -53,10 +72,17 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Nhà xuất bản</label>
-                <select v-model="localBook.maNXB" class="form-select"
-                    :class="{ 'is-invalid': v$.localBook.maNXB.$error }">
+                <select
+                    v-model="localBook.maNXB"
+                    class="form-select"
+                    :class="{ 'is-invalid': v$.localBook.maNXB.$error }"
+                >
                     <option value="" disabled>-- Chọn nhà xuất bản --</option>
-                    <option v-for="publisher in publishers" :key="publisher._id" :value="publisher._id">
+                    <option
+                        v-for="publisher in publishers"
+                        :key="publisher._id"
+                        :value="publisher._id"
+                    >
                         {{ publisher.tenNXB }}
                     </option>
                 </select>
@@ -67,10 +93,16 @@
             <!-- Năm xuất bản -->
             <div class="mb-3">
                 <label class="form-label">Năm xuất bản</label>
-                <input type="number" v-model.number="localBook.namXuatBan" class="form-control"
-                    :class="{ 'is-invalid': v$.localBook.namXuatBan.$error }" />
+                <input
+                    type="number"
+                    v-model.number="localBook.namXuatBan"
+                    class="form-control"
+                    :class="{ 'is-invalid': v$.localBook.namXuatBan.$error }"
+                />
                 <div v-if="v$.localBook.namXuatBan.$error" class="text-danger">
-                    <span v-if="!v$.localBook.namXuatBan.required">Vui lòng nhập năm xuất bản</span>
+                    <span v-if="!v$.localBook.namXuatBan.required"
+                        >Vui lòng nhập năm xuất bản</span
+                    >
                     <span v-else>Năm xuất bản không hợp lệ</span>
                 </div>
             </div>
@@ -78,10 +110,17 @@
             <!-- Đơn giá -->
             <div class="mb-3">
                 <label class="form-label">Đơn giá</label>
-                <input type="number" v-model.number="localBook.donGia" class="form-control" min="0"
-                    :class="{ 'is-invalid': v$.localBook.donGia.$error }" />
+                <input
+                    type="number"
+                    v-model.number="localBook.donGia"
+                    class="form-control"
+                    min="0"
+                    :class="{ 'is-invalid': v$.localBook.donGia.$error }"
+                />
                 <div v-if="v$.localBook.donGia.$error" class="text-danger">
-                    <span v-if="!v$.localBook.donGia.required">Vui lòng nhập đơn giá</span>
+                    <span v-if="!v$.localBook.donGia.required"
+                        >Vui lòng nhập đơn giá</span
+                    >
                     <span v-else>Đơn giá phải lớn hơn hoặc bằng 0</span>
                 </div>
             </div>
@@ -89,7 +128,10 @@
             <!-- Mô tả -->
             <div class="mb-3">
                 <label class="form-label">Mô tả</label>
-                <textarea v-model="localBook.moTa" class="form-control"></textarea>
+                <textarea
+                    v-model="localBook.moTa"
+                    class="form-control"
+                ></textarea>
             </div>
 
             <!-- Ảnh bìa -->
@@ -100,10 +142,18 @@
 
             <!-- Buttons -->
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-danger" @click="handleDelete">
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    @click="handleDelete"
+                >
                     Xóa
                 </button>
-                <button type="button" class="btn btn-secondary" @click="handleCancel">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    @click="handleCancel"
+                >
                     Hủy
                 </button>
                 <button type="submit" class="btn btn-primary">Lưu</button>
@@ -274,7 +324,6 @@ export default {
     },
 };
 </script>
-
 
 <style scoped>
 .is-invalid {

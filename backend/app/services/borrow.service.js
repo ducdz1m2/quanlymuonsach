@@ -41,7 +41,7 @@ class BorrowService {
     };
 
     Object.keys(borrow).forEach(
-      (key) => borrow[key] === undefined && delete borrow[key]
+      (key) => borrow[key] === undefined && delete borrow[key],
     );
 
     return borrow;
@@ -65,19 +65,19 @@ class BorrowService {
     }).toArray();
 
     const overdueBorrows = activeBorrows.filter(
-      (b) => b.trangThai === "Quá hạn"
+      (b) => b.trangThai === "Quá hạn",
     );
     if (overdueBorrows.length > 0) {
       throw new ApiError(
         400,
-        `Độc giả có ${overdueBorrows.length} phiếu mượn quá hạn, không thể mượn thêm.`
+        `Độc giả có ${overdueBorrows.length} phiếu mượn quá hạn, không thể mượn thêm.`,
       );
     }
 
     if (activeBorrows.length >= 3) {
       throw new ApiError(
         400,
-        "Độc giả đang mượn quá 3 quyển, không thể mượn thêm."
+        "Độc giả đang mượn quá 3 quyển, không thể mượn thêm.",
       );
     }
 
@@ -131,13 +131,18 @@ class BorrowService {
         soQuyen: (book.soQuyen || 0) + 1,
       });
 
-      const today = new Date();
-      const ngayTra = new Date(borrow.ngayTra); // hoặc update.ngayTra nếu có thay đổi
+      const actualReturnTimestamp = new Date(); // Store the exact timestamp of return
+
+      let todayForCalc = new Date(actualReturnTimestamp); // Use a separate variable for calculation
+      todayForCalc.setUTCHours(0, 0, 0, 0); // Normalize for calculation
+
+      let ngayTraForCalc = new Date(borrow.ngayTra); // hoặc update.ngayTra nếu có thay đổi
+      ngayTraForCalc.setUTCHours(0, 0, 0, 0); // Normalize for calculation
 
       // Tính penalty: số ngày từ hạn trả đến ngày trả thực tế
-      if (today > ngayTra) {
+      if (todayForCalc > ngayTraForCalc) {
         const overdueDays = Math.ceil(
-          (today - ngayTra) / (1000 * 60 * 60 * 24)
+          (todayForCalc - ngayTraForCalc) / (1000 * 60 * 60 * 24),
         );
         penalty = overdueDays * this.PENALTY_PER_DAY;
       } else {
@@ -145,16 +150,20 @@ class BorrowService {
       }
 
       // Lưu ngày trả thực tế
-      update.ngayThucTeTra = today; // Thêm field này nếu chưa có trong schema
+      update.ngayThucTeTra = actualReturnTimestamp; // Store the exact timestamp
     }
 
     // Nếu chưa trả thì tính lại trạng thái (giữ nguyên phần này)
     if (newStatus !== "Đã trả" && update.ngayTra) {
-      const today = new Date();
-      const dueDate = new Date(update.ngayTra);
-      if (today > dueDate) {
+      let todayForCalc = new Date();
+      todayForCalc.setUTCHours(0, 0, 0, 0); // Normalize for calculation
+
+      let dueDateForCalc = new Date(update.ngayTra);
+      dueDateForCalc.setUTCHours(0, 0, 0, 0); // Normalize for calculation
+
+      if (todayForCalc > dueDateForCalc) {
         const overdueDays = Math.ceil(
-          (today - dueDate) / (1000 * 60 * 60 * 24)
+          (todayForCalc - dueDateForCalc) / (1000 * 60 * 60 * 24),
         );
         penalty = overdueDays * this.PENALTY_PER_DAY;
         newStatus = "Quá hạn";
@@ -170,7 +179,7 @@ class BorrowService {
     const result = await this.Borrow.findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: update },
-      { returnDocument: "after" }
+      { returnDocument: "after" },
     );
 
     return result.value;
@@ -178,22 +187,32 @@ class BorrowService {
 
   // Tính phạt và trạng thái quá hạn
   calculatePenalty(borrow) {
-    const today = new Date();
-    const dueDate = new Date(borrow.ngayTra);
+    let today = new Date();
+    today.setUTCHours(0, 0, 0, 0); // Normalize today to UTC start of day
+
+    let dueDate = new Date(borrow.ngayTra);
+    dueDate.setUTCHours(0, 0, 0, 0); // Normalize due date to UTC start of day
+
     let status = borrow.trangThai;
     let penalty = 0;
 
     // Nếu đã trả => tính phạt dựa vào ngày thực tế trả
     if (status === "Đã trả") {
-      const returnDate = borrow.ngayThucTeTra
-        ? new Date(borrow.ngayThucTeTra)
-        : today; // Fallback nếu null
+      let returnDate;
+      if (borrow.ngayThucTeTra) {
+        returnDate = new Date(borrow.ngayThucTeTra);
+        returnDate.setUTCHours(0, 0, 0, 0); // Normalize actual return date to UTC start of day
+      } else {
+        returnDate = today; // Fallback if null, already normalized
+      }
+
       if (returnDate > dueDate) {
         const overdueDays = Math.ceil(
-          (returnDate - dueDate) / (1000 * 60 * 60 * 24)
+          (returnDate - dueDate) / (1000 * 60 * 60 * 24),
         );
         penalty = overdueDays * this.PENALTY_PER_DAY;
       }
+
       return { penalty, status };
     }
 
@@ -215,7 +234,7 @@ class BorrowService {
     if (document.trangThai == "Quá hạn") {
       throw new ApiError(
         400,
-        "Không thể xóa phiếu quá hạn, hãy xử lý trước khi xóa."
+        "Không thể xóa phiếu quá hạn, hãy xử lý trước khi xóa.",
       );
     }
     const result = await this.Borrow.findOneAndDelete({
@@ -288,13 +307,14 @@ class BorrowService {
 
     const results = await cursor.toArray();
     const today = new Date();
+    today.setUTCHours(0, 0, 0, 0); // Normalize 'today' to UTC start of day for consistent calculations
 
     // ✅ Tính tiền và cập nhật penalty nếu cần
     for (const b of results) {
       const book = b.bookInfo;
       if (!book) continue;
 
-      let penalty = b.penalty ?? 0;
+      let penalty = b.penalty ?? 0; // Use existing penalty, default to 0 if null/undefined
       let status = b.trangThai;
 
       if (b.trangThai === "Đã trả") {
@@ -314,21 +334,34 @@ class BorrowService {
         ) {
           await this.Borrow.updateOne(
             { _id: b._id },
-            { $set: { trangThai: status, penalty } }
+            { $set: { trangThai: status, penalty } },
           );
         }
       }
 
       // ✅ Tính tiền thuê sách (theo số ngày mượn)
-      const ngayMuon = new Date(b.ngayMuon);
-      const ngayTra = new Date(b.ngayTra);
-      const days = Math.max(
-        Math.ceil(
-          (Math.min(today, ngayTra) - ngayMuon) / (1000 * 60 * 60 * 24)
-        ),
-        1
+      let ngayMuon = new Date(b.ngayMuon);
+      ngayMuon.setUTCHours(0, 0, 0, 0); // Normalize ngayMuon to UTC start of day
+
+      let effectiveEndDate = today; // 'today' is already normalized
+      if (b.trangThai === "Đã trả" && b.ngayThucTeTra) {
+        effectiveEndDate = new Date(b.ngayThucTeTra);
+        effectiveEndDate.setUTCHours(0, 0, 0, 0); // Normalize actual return date to UTC start of day
+      }
+      // For other statuses ('Đang mượn', 'Quá hạn', 'Chờ duyệt'), effectiveEndDate remains 'today' (normalized)
+
+      // ✅ Tính tiền thuê sách (theo số ngày mượn dựa trên ngày trả dự kiến)
+      // Lấy ngayTra dự kiến từ borrow object
+      let ngayTraDuKien = new Date(b.ngayTra);
+      ngayTraDuKien.setUTCHours(0, 0, 0, 0); // Normalize ngayTraDuKien to UTC start of day
+
+      const diffTimeForRental = ngayTraDuKien.getTime() - ngayMuon.getTime();
+      const rentalDays = Math.max(
+        Math.floor(diffTimeForRental / (1000 * 60 * 60 * 24)) + 1,
+        1,
       );
-      const rentalFee = days * (book.donGia || 0);
+
+      const rentalFee = rentalDays * (book.donGia || 0);
       const totalPayment = rentalFee + penalty;
 
       // ✅ Gán vào object kết quả
@@ -357,21 +390,21 @@ class BorrowService {
     }).toArray();
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     for (const b of borrows) {
       const dueDate = new Date(b.ngayTra);
-      dueDate.setHours(0, 0, 0, 0);
+      dueDate.setUTCHours(0, 0, 0, 0);
 
       if (today > dueDate) {
         const overdueDays = Math.ceil(
-          (today - dueDate) / (1000 * 60 * 60 * 24)
+          (today - dueDate) / (1000 * 60 * 60 * 24),
         );
         const penalty = overdueDays * this.PENALTY_PER_DAY;
 
         await this.Borrow.updateOne(
           { _id: b._id },
-          { $set: { trangThai: "Quá hạn", penalty } }
+          { $set: { trangThai: "Quá hạn", penalty } },
         );
       }
     }

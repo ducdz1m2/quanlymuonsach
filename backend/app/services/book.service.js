@@ -19,7 +19,7 @@ class BookService {
       anhBia: payload.anhBia || "/images/default-book.png",
     };
     Object.keys(book).forEach(
-      (key) => book[key] === undefined && delete book[key]
+      (key) => book[key] === undefined && delete book[key],
     );
     return book;
   }
@@ -31,7 +31,7 @@ class BookService {
     const result = await this.Book.findOneAndUpdate(
       book,
       { $set: book },
-      { returnDocument: "after", upsert: true }
+      { returnDocument: "after", upsert: true },
     );
     return result.value;
   }
@@ -59,7 +59,7 @@ class BookService {
     const result = await this.Book.findOneAndUpdate(
       filter,
       { $set: update },
-      { returnDocument: "after" }
+      { returnDocument: "after" },
     );
     return result.value;
   }

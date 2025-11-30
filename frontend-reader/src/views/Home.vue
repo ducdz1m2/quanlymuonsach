@@ -5,28 +5,38 @@
         <!-- Toolbar: search + filters + xem đã tiêu -->
         <div class="row g-2 mb-3 align-items-center">
             <div class="col-auto">
-                <input type="text" class="form-control" placeholder="🔍 Tìm sách, tác giả hoặc mã..."
-                    v-model="searchQuery" />
+                <input
+                    type="text"
+                    class="form-control"
+                    placeholder="🔍 Tìm sách, tác giả hoặc mã..."
+                    v-model="searchQuery"
+                />
             </div>
 
             <div class="col-auto">
                 <select class="form-select" v-model="selectedCategory">
                     <option value="">📂 Tất cả thể loại</option>
-                    <option v-for="c in uniqueCategories" :key="c" :value="c">{{ c }}</option>
+                    <option v-for="c in uniqueCategories" :key="c" :value="c">
+                        {{ c }}
+                    </option>
                 </select>
             </div>
 
             <div class="col-auto">
                 <select class="form-select" v-model="selectedYear">
                     <option value="">📅 Tất cả năm</option>
-                    <option v-for="y in uniqueYears" :key="y" :value="y">{{ y }}</option>
+                    <option v-for="y in uniqueYears" :key="y" :value="y">
+                        {{ y }}
+                    </option>
                 </select>
             </div>
 
             <div class="col-auto">
                 <select class="form-select" v-model="selectedPublisher">
                     <option value="">🏢 Tất cả NXB</option>
-                    <option v-for="p in uniquePublishers" :key="p" :value="p">{{ p }}</option>
+                    <option v-for="p in uniquePublishers" :key="p" :value="p">
+                        {{ p }}
+                    </option>
                 </select>
             </div>
 
@@ -39,18 +49,28 @@
             </div>
 
             <div class="col-auto">
-                <select class="form-select" v-model="sortOrder" :disabled="!sortBy">
+                <select
+                    class="form-select"
+                    v-model="sortOrder"
+                    :disabled="!sortBy"
+                >
                     <option value="desc">⬇️ Cao → Thấp</option>
                     <option value="asc">⬆️ Thấp → Cao</option>
                 </select>
             </div>
 
             <div class="col-auto">
-                <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
+                <button class="btn btn-secondary" @click="resetFilters">
+                    ↺ Reset
+                </button>
             </div>
 
             <div v-if="this.isLoggedIn" class="col-auto ms-auto">
-                <button class="btn btn-outline-info" @click="openPaymentModal" :disabled="!isLoggedIn">
+                <button
+                    class="btn btn-outline-info"
+                    @click="openPaymentModal"
+                    :disabled="!isLoggedIn"
+                >
                     💳 Xem đã tiêu
                 </button>
             </div>
@@ -58,7 +78,9 @@
 
         <!-- Table sách -->
         <div class="table-responsive">
-            <table class="table table-bordered table-hover text-center align-middle">
+            <table
+                class="table table-bordered table-hover text-center align-middle"
+            >
                 <thead class="">
                     <tr>
                         <th>Mã sách</th>
@@ -78,36 +100,63 @@
                     <tr v-for="book in paginatedBooks" :key="book._id">
                         <td class="text-start">{{ book.maSach }}</td>
                         <td class="text-start">{{ book.tenSach }}</td>
-                        <td class="text-start">{{ book.theLoai || "Chưa có" }}</td>
-                        <td class="text-start">{{ book.tacGia || "Không rõ" }}</td>
+                        <td class="text-start">
+                            {{ book.theLoai || "Chưa có" }}
+                        </td>
+                        <td class="text-start">
+                            {{ book.tacGia || "Không rõ" }}
+                        </td>
                         <td>{{ book.soQuyen ?? 0 }}</td>
                         <td>{{ book.namXuatBan || "-" }}</td>
-                        <td>{{ book.donGia != null ? book.donGia.toLocaleString() + ' ₫' : '-' }}</td>
+                        <td>
+                            {{
+                                book.donGia != null
+                                    ? book.donGia.toLocaleString() + " ₫"
+                                    : "-"
+                            }}
+                        </td>
                         <td class="text-start">{{ book.moTa || "-" }}</td>
                         <td class="text-start">{{ book.tenNXB || "-" }}</td>
                         <td>
-                            <img :src="book.anhBia || '/images/default-book.png'" width="60" height="80"
-                                class="rounded" />
+                            <img
+                                :src="book.anhBia || '/images/default-book.png'"
+                                width="60"
+                                height="80"
+                                class="rounded"
+                            />
                         </td>
                         <td>
                             <!-- Nút mượn: chỉ hiển thị khi có sách và đã login -->
-                            <button v-if="book.soQuyen > 0 && isLoggedIn" class="btn btn-sm btn-primary me-2"
-                                @click="borrowBook(book)">
+                            <button
+                                v-if="book.soQuyen > 0 && isLoggedIn"
+                                class="btn btn-sm btn-primary me-2"
+                                @click="borrowBook(book)"
+                            >
                                 Mượn
                             </button>
 
                             <!-- Nếu có sách nhưng chưa login -> khuyến khích login -->
-                            <button v-else-if="book.soQuyen > 0 && !isLoggedIn"
-                                class="btn btn-sm btn-outline-primary me-2" @click="goToLogin"
-                                title="Bạn cần đăng nhập để mượn">
+                            <button
+                                v-else-if="book.soQuyen > 0 && !isLoggedIn"
+                                class="btn btn-sm btn-outline-primary me-2"
+                                @click="goToLogin"
+                                title="Bạn cần đăng nhập để mượn"
+                            >
                                 Đăng nhập để mượn
                             </button>
 
                             <!-- Hết sách -->
-                            <span v-else class="text-out-of-stock">Hết sách</span>
+                            <span v-else class="text-out-of-stock"
+                                >Hết sách</span
+                            >
 
                             <!-- nút xem chi tiết mượn (tuỳ chọn) -->
-                            <button class=" btn btn-sm btn-info ms-2" @click="viewBookDetail(book)">Chi tiết</button>
+                            <button
+                                class="btn btn-sm btn-info ms-2"
+                                @click="viewBookDetail(book)"
+                            >
+                                Chi tiết
+                            </button>
                         </td>
                     </tr>
 
@@ -122,39 +171,93 @@
         </div>
 
         <!-- Pagination -->
-        <div class="d-flex justify-content-center mt-3 gap-2" v-if="totalPages > 1">
-            <button class="btn btn-outline-primary" :disabled="currentPage === 1" @click="prevPage">◀ Trước</button>
-            <span class="align-self-center">Trang {{ currentPage }} / {{ totalPages || 1 }}</span>
-            <button class="btn btn-outline-primary" :disabled="currentPage === totalPages" @click="nextPage">Sau
-                ▶</button>
+        <div
+            class="d-flex justify-content-center mt-3 gap-2"
+            v-if="totalPages > 1"
+        >
+            <button
+                class="btn btn-outline-primary"
+                :disabled="currentPage === 1"
+                @click="prevPage"
+            >
+                ◀ Trước
+            </button>
+            <span class="align-self-center"
+                >Trang {{ currentPage }} / {{ totalPages || 1 }}</span
+            >
+            <button
+                class="btn btn-outline-primary"
+                :disabled="currentPage === totalPages"
+                @click="nextPage"
+            >
+                Sau ▶
+            </button>
         </div>
 
         <!-- Modal xem đã tiêu -->
-        <div v-if="showPaymentModal" class="modal-backdrop" @click.self="closePaymentModal">
-            <<div class="modal-dialog">
+        <div
+            v-if="showPaymentModal"
+            class="modal-backdrop"
+            @click.self="closePaymentModal"
+        >
+            <
+            <div class="modal-dialog">
                 <div class="modal-content p-4">
                     <h5>💳 Thông tin chi tiêu</h5>
 
                     <div v-if="paymentLoading">⏳ Đang tải...</div>
                     <div v-else>
-                        <p><strong>Độc giả:</strong> {{ readerInfo?.hoTen || readerInfo?.ten || '—' }}</p>
+                        <p>
+                            <strong>Độc giả:</strong>
+                            {{ readerInfo?.hoTen || readerInfo?.ten || "—" }}
+                        </p>
 
-                        <p><strong>Đã trả:</strong> {{ formatMoney(payment?.totalCollected) }}</p>
-                        <p><strong>Đang chờ xử lý:</strong> {{ formatMoney(payment?.totalPending) }}</p>
+                        <p>
+                            <strong>Đã trả:</strong>
+                            {{ formatMoney(payment?.totalCollected) }}
+                        </p>
+                        <p>
+                            <strong>Đang chờ xử lý:</strong>
+                            {{ formatMoney(payment?.totalPending) }}
+                        </p>
                         <p class="fw-bold border-top pt-2">
                             <strong>Tổng cộng:</strong>
-                            {{ formatMoney((payment?.totalCollected || 0) + (payment?.totalPending || 0)) }}
+                            {{
+                                formatMoney(
+                                    (payment?.totalCollected || 0) +
+                                        (payment?.totalPending || 0),
+                                )
+                            }}
                         </p>
 
                         <hr />
                         <h6>📘 Chi tiết mượn sách</h6>
                         <div v-if="payment?.borrows && payment.borrows.length">
                             <ul class="list-unstyled">
-                                <li v-for="b in payment.borrows" :key="b._id" class="mb-2">
-                                    <strong>{{ b.maMuon }}</strong> — {{ b.trangThai }}
-                                    <span v-if="b.penalty > 0"> (Phạt: {{ formatMoney(b.penalty) }})</span>
+                                <li
+                                    v-for="b in payment.borrows"
+                                    :key="b._id"
+                                    class="mb-2"
+                                >
+                                    <strong>{{ b.maMuon }}</strong> —
+                                    {{ b.trangThai }}
+                                    <span v-if="b.penalty > 0">
+                                        (Phạt:
+                                        {{ formatMoney(b.penalty) }})</span
+                                    >
+                                    <span v-if="b.rentalFee != null">
+                                        | Phí thuê:
+                                        {{ formatMoney(b.rentalFee) }}</span
+                                    >
+                                    <span v-if="b.totalPayment != null">
+                                        | Tổng cộng:
+                                        {{ formatMoney(b.totalPayment) }}</span
+                                    >
                                     <br />
-                                    <small>Ngày mượn: {{ b.ngayMuon }} | Hạn trả: {{ b.ngayTra }}</small>
+                                    <small
+                                        >Ngày mượn: {{ b.ngayMuon }} | Hạn trả:
+                                        {{ b.ngayTra }}</small
+                                    >
                                 </li>
                             </ul>
                         </div>
@@ -162,102 +265,161 @@
                     </div>
 
                     <div class="text-end mt-3">
-                        <button class="btn btn-secondary" @click="closePaymentModal">Đóng</button>
+                        <button
+                            class="btn btn-secondary"
+                            @click="closePaymentModal"
+                        >
+                            Đóng
+                        </button>
                     </div>
                 </div>
-        </div>
-
-    </div>
-    <!-- 🔍 Tìm kiếm phiếu mượn -->
-    <div v-if="isLoggedIn" class="mt-5">
-        <h4 class="mb-3">🔍 Tìm kiếm phiếu mượn</h4>
-
-        <div class="row g-2 mb-3 align-items-center">
-            <div class="col-auto">
-                <input type="text" class="form-control" placeholder="Tìm theo mã mượn hoặc tên sách..."
-                    v-model="borrowSearchQuery" />
-            </div>
-
-            <div class="col-auto">
-                <select class="form-select" v-model="borrowSelectedStatus">
-                    <option value="">📌 Tất cả trạng thái</option>
-                    <option v-for="s in uniqueBorrowStatuses" :key="s" :value="s">{{ s }}</option>
-                </select>
-            </div>
-
-            <div class="col-auto">
-                <select class="form-select" v-model="borrowSelectedYear">
-                    <option value="">📅 Tất cả năm mượn</option>
-                    <option v-for="y in uniqueBorrowYears" :key="y" :value="y">{{ y }}</option>
-                </select>
-            </div>
-
-            <div class="col-auto">
-                <button class="btn btn-secondary" @click="resetBorrowFilters">↺ Reset</button>
             </div>
         </div>
+        <!-- 🔍 Tìm kiếm phiếu mượn -->
+        <div v-if="isLoggedIn" class="mt-5">
+            <h4 class="mb-3">🔍 Tìm kiếm phiếu mượn</h4>
 
-        <!-- Bảng kết quả tìm kiếm -->
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover text-center align-middle">
-                <thead class="table-secondary">
-                    <tr>
-                        <th>Mã mượn</th>
-                        <th>Tên sách</th>
-                        <th>Ngày mượn</th>
-                        <th>Ngày trả</th>
-                        <th>Trạng thái</th>
-                        <th>Phí (₫)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-if="filteredBorrows.length === 0">
-                        <td colspan="6">Không có phiếu mượn phù hợp.</td>
-                    </tr>
-                    <tr v-for="b in filteredBorrows" :key="b._id">
-                        <td class="text-start">{{ b.maMuon || '(Không có mã)' }}</td>
-                        <td class="text-start">{{ b.bookInfo?.tenSach || 'Không rõ' }}</td>
-                        <td>{{ b.ngayMuon }}</td>
-                        <td>{{ b.ngayTra }}</td>
-                        <td><span :class="getBadgeClass(b.trangThai)">{{ b.trangThai }}</span></td>
-                        <td>{{ formatMoney(b.bookInfo?.donGia || 0) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-
-
-    <div v-if="showDetailModal" class="modal-backdrop" @click.self="closeDetailModal">
-        <div class="modal-dialog">
-            <div class="modal-content p-4">
-                <h5>🔎 Chi tiết sách</h5>
-                <div v-if="detailLoading">⏳ Đang tải...</div>
-                <div v-else-if="selectedBook">
-                    <p><strong>{{ selectedBook.tenSach }}</strong></p>
-                    <img :src="selectedBook.anhBia" alt="" width="150px">
-                    <p>{{ selectedBook.moTa || "Không có mô tả" }}</p>
-                    <p><strong>Số lượng:</strong> {{ selectedBook.soQuyen ?? 0 }}</p>
-                    <p><strong>Đơn giá:</strong> {{ formatMoney(selectedBook.donGia) }}</p>
+            <div class="row g-2 mb-3 align-items-center">
+                <div class="col-auto">
+                    <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Tìm theo mã mượn hoặc tên sách..."
+                        v-model="borrowSearchQuery"
+                    />
                 </div>
-                <div class="text-end mt-3">
-                    <button class="btn btn-secondary" @click="closeDetailModal">Đóng</button>
+
+                <div class="col-auto">
+                    <select class="form-select" v-model="borrowSelectedStatus">
+                        <option value="">📌 Tất cả trạng thái</option>
+                        <option
+                            v-for="s in uniqueBorrowStatuses"
+                            :key="s"
+                            :value="s"
+                        >
+                            {{ s }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <select class="form-select" v-model="borrowSelectedYear">
+                        <option value="">📅 Tất cả năm mượn</option>
+                        <option
+                            v-for="y in uniqueBorrowYears"
+                            :key="y"
+                            :value="y"
+                        >
+                            {{ y }}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <button
+                        class="btn btn-secondary"
+                        @click="resetBorrowFilters"
+                    >
+                        ↺ Reset
+                    </button>
                 </div>
             </div>
+
+            <!-- Bảng kết quả tìm kiếm -->
+            <div class="table-responsive">
+                <table
+                    class="table table-bordered table-hover text-center align-middle"
+                >
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Mã mượn</th>
+                            <th>Tên sách</th>
+                            <th>Ngày mượn</th>
+                            <th>Ngày trả</th>
+                            <th>Trạng thái</th>
+                            <th>Phí (₫)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="filteredBorrows.length === 0">
+                            <td colspan="6">Không có phiếu mượn phù hợp.</td>
+                        </tr>
+                        <tr v-for="b in filteredBorrows" :key="b._id">
+                            <td class="text-start">
+                                {{ b.maMuon || "(Không có mã)" }}
+                            </td>
+                            <td class="text-start">
+                                {{ b.bookInfo?.tenSach || "Không rõ" }}
+                            </td>
+                            <td>{{ b.ngayMuon }}</td>
+                            <td>{{ b.ngayTra }}</td>
+                            <td>
+                                <span :class="getBadgeClass(b.trangThai)">{{
+                                    b.trangThai
+                                }}</span>
+                            </td>
+                            <td>{{ formatMoney(b.totalPayment || 0) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <button v-if="isLoggedIn" class="btn btn-sm btn-primary position-relative" @click="openChat(readerInfo)">
-        Liên hệ với thủ thư
-        <span v-if="chatNotifications[readerInfo._id]"
-            class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-        </span>
-    </button>
+        <div
+            v-if="showDetailModal"
+            class="modal-backdrop"
+            @click.self="closeDetailModal"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content p-4">
+                    <h5>🔎 Chi tiết sách</h5>
+                    <div v-if="detailLoading">⏳ Đang tải...</div>
+                    <div v-else-if="selectedBook">
+                        <p>
+                            <strong>{{ selectedBook.tenSach }}</strong>
+                        </p>
+                        <img :src="selectedBook.anhBia" alt="" width="150px" />
+                        <p>{{ selectedBook.moTa || "Không có mô tả" }}</p>
+                        <p>
+                            <strong>Số lượng:</strong>
+                            {{ selectedBook.soQuyen ?? 0 }}
+                        </p>
+                        <p>
+                            <strong>Đơn giá:</strong>
+                            {{ formatMoney(selectedBook.donGia) }}
+                        </p>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button
+                            class="btn btn-secondary"
+                            @click="closeDetailModal"
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <ChatBox v-if="showChat" :room-id="readerInfo._id" :sender="readerInfo" @close="closeChat" />
+        <button
+            v-if="isLoggedIn"
+            class="btn btn-sm btn-primary position-relative"
+            @click="openChat(readerInfo)"
+        >
+            Liên hệ với thủ thư
+            <span
+                v-if="chatNotifications[readerInfo._id]"
+                class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+            >
+            </span>
+        </button>
 
-
+        <ChatBox
+            v-if="showChat"
+            :room-id="readerInfo._id"
+            :sender="readerInfo"
+            @close="closeChat"
+        />
     </div>
 </template>
 
@@ -314,14 +476,24 @@ export default {
     },
     computed: {
         uniqueBorrowStatuses() {
-            return [...new Set(this.borrowedBooks.map(b => b.trangThai).filter(Boolean))];
+            return [
+                ...new Set(
+                    this.borrowedBooks.map((b) => b.trangThai).filter(Boolean),
+                ),
+            ];
         },
         uniqueBorrowYears() {
-            return [...new Set(
-                this.borrowedBooks
-                    .map(b => b.ngayMuon ? new Date(b.ngayMuon).getFullYear() : null)
-                    .filter(Boolean)
-            )].sort((a, b) => b - a);
+            return [
+                ...new Set(
+                    this.borrowedBooks
+                        .map((b) =>
+                            b.ngayMuon
+                                ? new Date(b.ngayMuon).getFullYear()
+                                : null,
+                        )
+                        .filter(Boolean),
+                ),
+            ].sort((a, b) => b - a);
         },
         filteredBorrows() {
             const q = this.borrowSearchQuery.trim().toLowerCase();
@@ -330,23 +502,35 @@ export default {
                 const maMuon = b.maMuon?.toLowerCase() || "";
                 const tenSach = b.bookInfo?.tenSach?.toLowerCase() || "";
 
-                const matchesSearch = !q || maMuon.includes(q) || tenSach.includes(q);
-                const matchesStatus = !this.borrowSelectedStatus || b.trangThai === this.borrowSelectedStatus;
+                const matchesSearch =
+                    !q || maMuon.includes(q) || tenSach.includes(q);
+                const matchesStatus =
+                    !this.borrowSelectedStatus ||
+                    b.trangThai === this.borrowSelectedStatus;
 
-                const year = b.ngayMuon ? new Date(b.ngayMuon).getFullYear() : null;
-                const matchesYear = !this.borrowSelectedYear || year == this.borrowSelectedYear;
+                const year = b.ngayMuon
+                    ? new Date(b.ngayMuon).getFullYear()
+                    : null;
+                const matchesYear =
+                    !this.borrowSelectedYear || year == this.borrowSelectedYear;
 
                 return matchesSearch && matchesStatus && matchesYear;
             });
         },
         uniqueCategories() {
-            return [...new Set(this.books.map((b) => b.theLoai).filter(Boolean))];
+            return [
+                ...new Set(this.books.map((b) => b.theLoai).filter(Boolean)),
+            ];
         },
         uniqueYears() {
-            return [...new Set(this.books.map((b) => b.namXuatBan).filter(Boolean))].sort((a, b) => b - a);
+            return [
+                ...new Set(this.books.map((b) => b.namXuatBan).filter(Boolean)),
+            ].sort((a, b) => b - a);
         },
         uniquePublishers() {
-            return [...new Set(this.books.map((b) => b.tenNXB).filter(Boolean))];
+            return [
+                ...new Set(this.books.map((b) => b.tenNXB).filter(Boolean)),
+            ];
         },
         filteredBooks() {
             const q = this.searchQuery.trim().toLowerCase();
@@ -355,12 +539,26 @@ export default {
                 const author = b.tacGia?.toLowerCase() || "";
                 const code = b.maSach?.toLowerCase() || "";
 
-                const matchesSearch = !q || name.includes(q) || author.includes(q) || code.includes(q);
-                const matchesCategory = !this.selectedCategory || b.theLoai === this.selectedCategory;
-                const matchesYear = !this.selectedYear || b.namXuatBan == this.selectedYear;
-                const matchesPublisher = !this.selectedPublisher || b.tenNXB === this.selectedPublisher;
+                const matchesSearch =
+                    !q ||
+                    name.includes(q) ||
+                    author.includes(q) ||
+                    code.includes(q);
+                const matchesCategory =
+                    !this.selectedCategory ||
+                    b.theLoai === this.selectedCategory;
+                const matchesYear =
+                    !this.selectedYear || b.namXuatBan == this.selectedYear;
+                const matchesPublisher =
+                    !this.selectedPublisher ||
+                    b.tenNXB === this.selectedPublisher;
 
-                return matchesSearch && matchesCategory && matchesYear && matchesPublisher;
+                return (
+                    matchesSearch &&
+                    matchesCategory &&
+                    matchesYear &&
+                    matchesPublisher
+                );
             });
 
             if (this.sortBy === "price") {
@@ -380,7 +578,9 @@ export default {
             return result;
         },
         totalPages() {
-            return Math.ceil(this.filteredBooks.length / this.itemsPerPage) || 1;
+            return (
+                Math.ceil(this.filteredBooks.length / this.itemsPerPage) || 1
+            );
         },
         paginatedBooks() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
@@ -412,18 +612,15 @@ export default {
                     message: n.message,
                 }));
             } catch (err) {
-
                 Swal.fire("❌ Lỗi!", "Lỗi khi tải tin nhắn.", "error");
                 this.messages = [
-                    { senderName: "Hệ thống", message: "Không thể tải tin nhắn." },
+                    {
+                        senderName: "Hệ thống",
+                        message: "Không thể tải tin nhắn.",
+                    },
                 ];
             }
         },
-
-
-
-
-
 
         getBadgeClass(status) {
             switch (status) {
@@ -448,7 +645,9 @@ export default {
             if (!this.isLoggedIn || !this.readerInfo?._id) return;
             this.borrowLoading = true;
             try {
-                this.borrowedBooks = await BorrowService.getByReader(this.readerInfo._id);
+                this.borrowedBooks = await BorrowService.getByReader(
+                    this.readerInfo._id,
+                );
             } catch (err) {
                 // console.error("Lỗi tải sách đang mượn:", err);
 
@@ -458,7 +657,6 @@ export default {
                 this.borrowLoading = false;
             }
         },
-
 
         resetFilters() {
             this.searchQuery = "";
@@ -498,16 +696,23 @@ export default {
             if (!this.isLoggedIn || !this.borrowedBooks.length) return;
 
             const today = new Date();
-            const almostExpired = this.borrowedBooks.filter(b => {
+            const almostExpired = this.borrowedBooks.filter((b) => {
                 if (!b.ngayTra) return false;
                 const returnDate = new Date(b.ngayTra);
-                const diffDays = Math.ceil((returnDate - today) / (1000 * 60 * 60 * 24));
-                return diffDays > 0 && diffDays <= 3 && b.trangThai !== "Đã trả"; // còn <= 3 ngày
+                const diffDays = Math.ceil(
+                    (returnDate - today) / (1000 * 60 * 60 * 24),
+                );
+                return (
+                    diffDays > 0 && diffDays <= 3 && b.trangThai !== "Đã trả"
+                ); // còn <= 3 ngày
             });
 
             if (almostExpired.length) {
                 const list = almostExpired
-                    .map(b => `📘 <b>${b.bookInfo?.tenSach || 'Không rõ'}</b> — hạn trả: <b>${b.ngayTra}</b>`)
+                    .map(
+                        (b) =>
+                            `📘 <b>${b.bookInfo?.tenSach || "Không rõ"}</b> — hạn trả: <b>${b.ngayTra}</b>`,
+                    )
                     .join("<br>");
 
                 Swal.fire({
@@ -527,7 +732,11 @@ export default {
 
         async borrowBook(book) {
             if (!this.isLoggedIn || !this.readerInfo?._id) {
-                Swal.fire("Bạn cần đăng nhập", "Vui lòng đăng nhập để mượn sách.", "info");
+                Swal.fire(
+                    "Bạn cần đăng nhập",
+                    "Vui lòng đăng nhập để mượn sách.",
+                    "info",
+                );
                 this.goToLogin();
                 return;
             }
@@ -542,14 +751,17 @@ export default {
                 title: `Mượn sách: ${book.tenSach}`,
                 html: `
             <p>Chọn ngày trả sách:</p>
-            <input type="date" id="return-date" class="swal2-input" min="${new Date().toISOString().split('T')[0]}">
+            <input type="date" id="return-date" class="swal2-input" min="${new Date().toISOString().split("T")[0]}">
         `,
                 showCancelButton: true,
                 confirmButtonText: "Mượn",
                 cancelButtonText: "Hủy",
                 preConfirm: () => {
                     const date = document.getElementById("return-date").value;
-                    if (!date) Swal.showValidationMessage("Bạn phải chọn ngày trả sách!");
+                    if (!date)
+                        Swal.showValidationMessage(
+                            "Bạn phải chọn ngày trả sách!",
+                        );
                     return date;
                 },
             });
@@ -561,7 +773,7 @@ export default {
                     readerId: this.readerInfo._id,
                     bookId: book._id,
                     quantity: 1,
-                    ngayTra: returnDate,  // gửi ngày trả cho backend
+                    ngayTra: returnDate, // gửi ngày trả cho backend
                 });
 
                 Swal.fire({
@@ -576,9 +788,12 @@ export default {
 
                 await this.fetchBooks();
                 await this.fetchBorrowedBooks();
-
             } catch (err) {
-                if (err.response && err.response.data && err.response.data.message) {
+                if (
+                    err.response &&
+                    err.response.data &&
+                    err.response.data.message
+                ) {
                     Swal.fire("Lỗi", err.response.data.message, "error");
                 } else {
                     Swal.fire("Lỗi", "Không thể mượn sách lúc này.", "error");
@@ -588,7 +803,11 @@ export default {
 
         async openPaymentModal() {
             if (!this.isLoggedIn || !this.readerInfo?._id) {
-                Swal.fire("Bạn cần đăng nhập", "Vui lòng đăng nhập để xem số tiền đã tiêu.", "info");
+                Swal.fire(
+                    "Bạn cần đăng nhập",
+                    "Vui lòng đăng nhập để xem số tiền đã tiêu.",
+                    "info",
+                );
                 this.goToLogin();
                 return;
             }
@@ -634,7 +853,9 @@ export default {
             const token = localStorage.getItem("readerToken");
             this.isLoggedIn = !!token;
             try {
-                const info = JSON.parse(localStorage.getItem("readerInfo") || "null");
+                const info = JSON.parse(
+                    localStorage.getItem("readerInfo") || "null",
+                );
                 this.readerInfo = info || null;
             } catch (e) {
                 this.readerInfo = null;
@@ -643,7 +864,6 @@ export default {
     },
 
     mounted() {
-
         window.addEventListener("storage", this.loadReaderFromLocalStorage);
 
         this.loadReaderFromLocalStorage();
@@ -655,19 +875,12 @@ export default {
         this.socket = io("http://localhost:3000");
 
         this.socket.on("receiveMessage", (msg) => {
-
             if (msg.sender != this.readerInfo.ten) {
-
                 this.chatNotifications[msg.room] = true;
             }
-
-
         });
-
     },
     beforeUnmount() {
-
-
         window.removeEventListener("storage", this.loadReaderFromLocalStorage);
     },
 };
