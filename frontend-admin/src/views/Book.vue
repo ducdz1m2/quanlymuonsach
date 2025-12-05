@@ -387,6 +387,16 @@ export default {
                 try {
                     await BookService.delete(id);
                     await this.fetchBooks();
+                    // Thêm logic điều chỉnh currentPage sau khi xóa
+                    if (
+                        this.currentPage > this.totalPages &&
+                        this.totalPages > 0
+                    ) {
+                        this.currentPage = this.totalPages;
+                    } else if (this.totalPages === 0) {
+                        // Nếu không còn sách nào
+                        this.currentPage = 1;
+                    }
                     Swal.fire({
                         icon: "success",
                         title: "Đã xóa!",
@@ -421,6 +431,13 @@ export default {
             try {
                 await BookService.delete(book._id);
                 await this.fetchBooks();
+                // Thêm logic điều chỉnh currentPage sau khi xóa
+                if (this.currentPage > this.totalPages && this.totalPages > 0) {
+                    this.currentPage = this.totalPages;
+                } else if (this.totalPages === 0) {
+                    // Nếu không còn sách nào
+                    this.currentPage = 1;
+                }
                 this.closeForm();
                 Swal.fire({
                     icon: "success",

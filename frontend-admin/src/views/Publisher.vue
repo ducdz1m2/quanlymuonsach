@@ -2,26 +2,38 @@
     <div class="p-4">
         <h1 class="mb-4">👨‍💼 Quản lý Nhà xuất bản</h1>
 
-        <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2">
-            <input type="text" class="form-control w-25" placeholder="🔍 Tìm kiếm nhà xuất bản..."
-                v-model="searchQuery" />
+        <div
+            class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-2"
+        >
+            <input
+                type="text"
+                class="form-control w-25"
+                placeholder="🔍 Tìm kiếm nhà xuất bản..."
+                v-model="searchQuery"
+            />
 
             <!-- Lọc theo địa chỉ -->
             <select class="form-select w-auto" v-model="selectedCity">
                 <option value="">🏙️ Tất cả địa chỉ</option>
-                <option v-for="c in uniqueCities" :key="c" :value="c">{{ c }}</option>
+                <option v-for="c in uniqueCities" :key="c" :value="c">
+                    {{ c }}
+                </option>
             </select>
 
             <!-- Nút reset -->
-            <button class="btn btn-secondary" @click="resetFilters">↺ Reset</button>
+            <button class="btn btn-secondary" @click="resetFilters">
+                ↺ Reset
+            </button>
 
-            <button class="btn btn-primary" @click="openAddModal">+ Thêm NXB</button>
+            <button class="btn btn-primary" @click="openAddModal">
+                + Thêm NXB
+            </button>
         </div>
 
-
-
         <div class="table-responsive">
-            <table class="table table-bordered table-hover text-center align-middle">
+            <table
+                class="table table-bordered table-hover text-center align-middle"
+            >
                 <thead class="table-dark">
                     <tr>
                         <th>Mã NXB</th>
@@ -32,17 +44,37 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="publisher in paginatedPublishers" :key="publisher._id">
+                    <tr
+                        v-for="publisher in paginatedPublishers"
+                        :key="publisher._id"
+                    >
                         <td class="text-start">{{ publisher.maNXB }}</td>
                         <td class="text-start">{{ publisher.tenNXB }}</td>
                         <td class="text-start">{{ publisher.diaChi }}</td>
                         <td>
-                            <img :src="publisher.anh || '/images/default-publisher.png'" width="60" height="80"
-                                class="rounded shadow-sm" />
+                            <img
+                                :src="
+                                    publisher.anh ||
+                                    '/images/default-publisher.png'
+                                "
+                                width="60"
+                                height="80"
+                                class="rounded shadow-sm"
+                            />
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-warning me-2" @click="openEditModal(publisher)">Sửa</button>
-                            <button class="btn btn-sm btn-danger" @click="confirmDelete(publisher)">Xóa</button>
+                            <button
+                                class="btn btn-sm btn-warning me-2"
+                                @click="openEditModal(publisher)"
+                            >
+                                Sửa
+                            </button>
+                            <button
+                                class="btn btn-sm btn-danger"
+                                @click="confirmDelete(publisher)"
+                            >
+                                Xóa
+                            </button>
                         </td>
                     </tr>
                     <tr v-if="!loading && paginatedPublishers.length === 0">
@@ -55,26 +87,46 @@
             </table>
         </div>
 
-        <div class="d-flex justify-content-center mt-3 gap-2" v-if="totalPages > 1">
-            <button class="btn btn-outline-primary" :disabled="currentPage === 1" @click="prevPage">◀ Trước</button>
-            <span class="align-self-center">Trang {{ currentPage }} / {{ totalPages || 1 }}</span>
-            <button class="btn btn-outline-primary" :disabled="currentPage === totalPages" @click="nextPage">Sau
-                ▶</button>
+        <div
+            class="d-flex justify-content-center mt-3 gap-2"
+            v-if="totalPages > 1"
+        >
+            <button
+                class="btn btn-outline-primary"
+                :disabled="currentPage === 1"
+                @click="prevPage"
+            >
+                ◀ Trước
+            </button>
+            <span class="align-self-center"
+                >Trang {{ currentPage }} / {{ totalPages || 1 }}</span
+            >
+            <button
+                class="btn btn-outline-primary"
+                :disabled="currentPage === totalPages"
+                @click="nextPage"
+            >
+                Sau ▶
+            </button>
         </div>
 
         <div v-if="showForm" class="modal-backdrop">
             <div class="modal-content p-4">
                 <h5>{{ editingPublisher ? "✏️ Sửa NXB" : "➕ Thêm NXB" }}</h5>
-                <PublisherForm :publisher="editingPublisher" @save="handleSave" @cancel="closeForm"
-                    @delete="handleDelete" />
+                <PublisherForm
+                    :publisher="editingPublisher"
+                    @save="handleSave"
+                    @cancel="closeForm"
+                    @delete="handleDelete"
+                />
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import PublisherForm from '@/components/publishers/PublisherForm.vue';
-import publisherService from '@/services/publisher.service';
+import PublisherForm from "@/components/publishers/PublisherForm.vue";
+import publisherService from "@/services/publisher.service";
 import Swal from "sweetalert2";
 
 export default {
@@ -83,8 +135,7 @@ export default {
         return {
             publishers: [],
             searchQuery: "",
-            selectedCity: "",   // lọc theo địa chỉ (tỉnh/thành phố)
-
+            selectedCity: "", // lọc theo địa chỉ (tỉnh/thành phố)
 
             loading: false,
             showForm: false,
@@ -96,7 +147,11 @@ export default {
 
     computed: {
         uniqueCities() {
-            return [...new Set(this.publishers.map(p => p.diaChi).filter(Boolean))];
+            return [
+                ...new Set(
+                    this.publishers.map((p) => p.diaChi).filter(Boolean),
+                ),
+            ];
         },
 
         filteredPublishers() {
@@ -108,24 +163,33 @@ export default {
                 const address = p.diaChi?.toLowerCase() || "";
 
                 // ✅ lọc theo search
-                const matchesSearch = !q || code.includes(q) || name.includes(q) || address.includes(q);
+                const matchesSearch =
+                    !q ||
+                    code.includes(q) ||
+                    name.includes(q) ||
+                    address.includes(q);
 
                 // ✅ lọc theo địa chỉ
-                const matchesCity = !this.selectedCity || p.diaChi === this.selectedCity;
+                const matchesCity =
+                    !this.selectedCity || p.diaChi === this.selectedCity;
 
                 // ✅ lọc theo tình trạng ảnh
-
 
                 return matchesSearch && matchesCity;
             });
         },
 
         totalPages() {
-            return Math.ceil(this.filteredPublishers.length / this.itemsPerPage);
+            return Math.ceil(
+                this.filteredPublishers.length / this.itemsPerPage,
+            );
         },
         paginatedPublishers() {
             const start = (this.currentPage - 1) * this.itemsPerPage;
-            return this.filteredPublishers.slice(start, start + this.itemsPerPage);
+            return this.filteredPublishers.slice(
+                start,
+                start + this.itemsPerPage,
+            );
         },
     },
 
@@ -138,22 +202,43 @@ export default {
 
         async fetchPublishers() {
             this.loading = true;
-            try { this.publishers = await publisherService.getAll(); }
-            catch (err) { this.publishers = []; }
-            finally { this.loading = false; }
+            try {
+                this.publishers = await publisherService.getAll();
+            } catch (err) {
+                this.publishers = [];
+            } finally {
+                this.loading = false;
+            }
         },
-        prevPage() { if (this.currentPage > 1) this.currentPage--; },
-        nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
-        openAddModal() { this.editingPublisher = null; this.showForm = true; },
-        openEditModal(publisher) { this.editingPublisher = { ...publisher }; this.showForm = true; },
-        closeForm() { this.showForm = false; this.editingPublisher = null; },
+        prevPage() {
+            if (this.currentPage > 1) this.currentPage--;
+        },
+        nextPage() {
+            if (this.currentPage < this.totalPages) this.currentPage++;
+        },
+        openAddModal() {
+            this.editingPublisher = null;
+            this.showForm = true;
+        },
+        openEditModal(publisher) {
+            this.editingPublisher = { ...publisher };
+            this.showForm = true;
+        },
+        closeForm() {
+            this.showForm = false;
+            this.editingPublisher = null;
+        },
         async handleSave(publisher) {
             try {
-                if (publisher._id) await publisherService.update(publisher._id, publisher);
+                if (publisher._id)
+                    await publisherService.update(publisher._id, publisher);
                 else await publisherService.create(publisher);
                 await this.fetchPublishers();
-            } catch (err) { console.error("Lỗi lưu NXB:", err); }
-            finally { this.closeForm(); }
+            } catch (err) {
+                console.error("Lỗi lưu NXB:", err);
+            } finally {
+                this.closeForm();
+            }
         },
         async handleDelete(publisher) {
             try {
@@ -161,12 +246,22 @@ export default {
 
                 // Xóa thành công
                 await this.fetchPublishers();
+                // Thêm logic điều chỉnh currentPage sau khi xóa
+                if (this.currentPage > this.totalPages && this.totalPages > 0) {
+                    this.currentPage = this.totalPages;
+                } else if (this.totalPages === 0) {
+                    // Nếu không còn NXB nào
+                    this.currentPage = 1;
+                }
                 this.closeForm();
 
                 Swal.fire({
                     icon: "success",
                     title: "Đã xóa NXB",
-                    text: (response?.data?.message || response?.message || "Xóa nhà xuất bản thành công."),
+                    text:
+                        response?.data?.message ||
+                        response?.message ||
+                        "Xóa nhà xuất bản thành công.",
                     timer: 1500,
                     showConfirmButton: false,
                     toast: true,
@@ -208,16 +303,11 @@ export default {
             if (!result.isConfirmed) return;
 
             await this.handleDelete(publisher);
-        }
-
-
-
-
-
-
-
+        },
     },
-    mounted() { this.fetchPublishers(); },
+    mounted() {
+        this.fetchPublishers();
+    },
 };
 </script>
 

@@ -1,35 +1,44 @@
 <template>
     <nav class="py-3 ms-2 row text-center">
-        <div class="col-8 d-flex align-items-center">
-            📚 Library Manager
-        </div>
+        <div class="col-8 d-flex align-items-center">📚 Library Manager</div>
 
-        <div class="col-4 d-flex flex-row justify-content-end align-items-center">
-            <!-- <NotificationBell @openChat="openChatWindow" /> -->
+        <div
+            class="col-4 d-flex flex-row justify-content-end align-items-center"
+        >
             <ThemeToggle />
-            <ChatBox v-if="showChat" :room-id="activeRoomId" :sender="currentUser" @close="showChat = false" />
+            <ChatBox
+                v-if="showChat"
+                :room-id="activeRoomId"
+                :sender="currentUser"
+                @close="showChat = false"
+            />
 
             <!-- Hiển thị avatar thật của nhân viên -->
-            <Avatar v-if="isLoggedIn && readerInfo" class="mx-3" :src="readerInfo.anh || 'https://i.pravatar.cc/100'"
-                :name="readerInfo.hoTenNV || 'Người dùng'" size="sm" @view-profile="goToProfile"
-                @logout="handleLogout" />
+            <Avatar
+                v-if="isLoggedIn && readerInfo"
+                class="mx-3"
+                :src="readerInfo.anh || 'https://i.pravatar.cc/100'"
+                :name="readerInfo.hoTenNV || 'Người dùng'"
+                size="sm"
+                @view-profile="goToProfile"
+                @logout="handleLogout"
+            />
         </div>
     </nav>
 </template>
 
 <script>
-import NotificationBell from "./NotificationBell.vue";
 import Avatar from "./Avatar.vue";
 import readerService from "@/services/reader.service";
 import ChatBox from "./ChatBox.vue";
 import ThemeToggle from "./ThemeToggle.vue";
 export default {
-    components: { NotificationBell, Avatar, ChatBox, ThemeToggle },
+    components: { Avatar, ChatBox, ThemeToggle },
     props: {
         reader: {
             type: Object,
-            default: () => ({})
-        }
+            default: () => ({}),
+        },
     },
     data() {
         return {
@@ -39,7 +48,6 @@ export default {
         };
     },
     mounted() {
-
         this.checkLoginStatus();
 
         window.addEventListener("storage", this.checkLoginStatus);
@@ -51,7 +59,6 @@ export default {
     watch: {
         reader: {
             handler(newVal) {
-
                 if (newVal && Object.keys(newVal).length > 0) {
                     this.isLoggedIn = true;
                     this.readerInfo = newVal;
@@ -63,14 +70,16 @@ export default {
     },
 
     methods: {
-
         checkLoginStatus() {
             const token = localStorage.getItem("readerToken");
             this.isLoggedIn = !!token;
 
             if (this.isLoggedIn) {
-                const info = JSON.parse(localStorage.getItem("readerInfo") || "{}");
-                this.readerInfo = info && Object.keys(info).length ? info : null;
+                const info = JSON.parse(
+                    localStorage.getItem("readerInfo") || "{}",
+                );
+                this.readerInfo =
+                    info && Object.keys(info).length ? info : null;
             } else {
                 this.readerInfo = null;
             }
@@ -78,9 +87,7 @@ export default {
 
         goToProfile() {
             if (this.readerInfo) {
-
                 this.$emit("open-profile", this.readerInfo);
-
             }
         },
 
@@ -91,6 +98,5 @@ export default {
             this.$router.push("/login");
         },
     },
-
 };
 </script>
