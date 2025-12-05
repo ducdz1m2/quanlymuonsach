@@ -15,8 +15,8 @@ class BookService {
       soQuyen: payload.soQuyen,
       namXuatBan: payload.namXuatBan,
       maNXB: payload.maNXB ? new ObjectId(payload.maNXB) : undefined,
-      moTa: payload.moTa || "Chưa có mô tả",
-      anhBia: payload.anhBia || "/images/default-book.png",
+      moTa: payload.moTa,
+      anhBia: payload.anhBia,
     };
     Object.keys(book).forEach(
       (key) => book[key] === undefined && delete book[key],
@@ -27,6 +27,10 @@ class BookService {
   async create(payload) {
     const book = this.extractBookData(payload);
     book.createdAt = new Date();
+
+    // Đặt giá trị mặc định nếu chúng không được cung cấp trong payload
+    book.moTa = book.moTa || "Chưa có mô tả";
+    book.anhBia = book.anhBia || "/images/default-book.png";
 
     const result = await this.Book.findOneAndUpdate(
       book,
@@ -55,10 +59,10 @@ class BookService {
   async update(id, payload) {
     if (!ObjectId.isValid(id)) return null;
     const filter = { _id: new ObjectId(id) };
-    const update = this.extractBookData(payload);
+    const updateData = this.extractBookData(payload);
     const result = await this.Book.findOneAndUpdate(
       filter,
-      { $set: update },
+      { $set: updateData },
       { returnDocument: "after" },
     );
     return result.value;
