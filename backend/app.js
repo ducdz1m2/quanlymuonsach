@@ -21,7 +21,7 @@ app.use(
   cors({
     origin: ["http://localhost:3001", "http://localhost:3002"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Cho phép gửi Authorization header
+    allowedHeaders: ["Content-Type", "Authorization"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   }),
 );
@@ -29,7 +29,7 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// 🌐 Public routes (không cần token)
+//(không cần token)
 app.get("/", (req, res) => {
   res.json({ message: "Chào mừng đến với hệ thống mượn sách!" });
 });
@@ -43,16 +43,14 @@ app.post(
 app.post("/api/readers", require("./app/controllers/reader.controller").create);
 
 app.use("/api/books", bookRouter);
-// 🧱 Các route còn lại đều cần token
-app.use(verifyToken);
 
-// Sau đây là các route cần xác thực JWT
+app.use(verifyToken);
 
 app.use("/api/borrows", borrowRouter);
 app.use("/api/publishers", publisherRouter);
 app.use("/api/messages", messageRouter);
-app.use("/api/readers", readerRouter); // các route reader khác sau khi đăng nhập
-app.use("/api/staffs", authorize(["staff"]), staffRouter); // chỉ staff được phép
+app.use("/api/readers", readerRouter);
+app.use("/api/staffs", authorize(["staff"]), staffRouter);
 
 // ❌ Error handling
 app.use((req, res, next) => {
