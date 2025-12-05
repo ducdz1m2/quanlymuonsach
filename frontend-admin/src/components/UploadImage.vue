@@ -1,20 +1,52 @@
 <template>
-    <div class="upload-box border border-2 rounded p-3 text-center" :class="{ 'drag-over': isDragOver }"
-        @dragover.prevent="handleDragOver" @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop">
+    <div
+        class="upload-box border border-2 rounded p-3 text-center"
+        :class="{ 'drag-over': isDragOver }"
+        @dragover.prevent="handleDragOver"
+        @dragleave.prevent="handleDragLeave"
+        @drop.prevent="handleDrop"
+    >
         <div v-if="!preview">
             <p class="">📂 Kéo thả ảnh vào đây hoặc</p>
-            <input type="file" accept="image/*" class="form-control" @change="handleFileSelect" />
+            <input
+                type="file"
+                accept="image/*"
+                class="form-control"
+                @change="handleFileSelect"
+            />
         </div>
 
         <div v-else>
-            <img :src="preview" alt="Preview" class="img-thumbnail mb-2" style="max-height: 200px; object-fit: cover" />
+            <img
+                :src="preview"
+                alt="Preview"
+                class="img-thumbnail mb-2"
+                style="max-height: 200px; object-fit: cover"
+            />
             <div class="d-flex justify-content-center gap-2">
-                <button type="button" class="btn btn-sm btn-danger" @click="removeImage">❌ Xóa</button>
-                <button type="button" class="btn btn-sm btn-secondary" @click="$refs.fileInput.click()">📂 Chọn ảnh
-                    khác</button>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-danger"
+                    @click="removeImage"
+                >
+                    ❌ Xóa
+                </button>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-secondary"
+                    @click="$refs.fileInput.click()"
+                >
+                    📂 Chọn ảnh khác
+                </button>
             </div>
 
-            <input type="file" accept="image/*" ref="fileInput" class="d-none" @change="handleFileSelect" />
+            <input
+                type="file"
+                accept="image/*"
+                ref="fileInput"
+                class="d-none"
+                @change="handleFileSelect"
+            />
         </div>
     </div>
 </template>
@@ -23,7 +55,7 @@
 export default {
     name: "UploadImage",
     props: {
-        modelValue: String, // hỗ trợ v-model để bind ra form
+        modelValue: String,
     },
     emits: ["update:modelValue"],
 
@@ -76,7 +108,9 @@ export default {
 <style scoped>
 .upload-box {
     /* background: #fafafa; */
-    transition: background 0.2s, border-color 0.2s;
+    transition:
+        background 0.2s,
+        border-color 0.2s;
     cursor: pointer;
 }
 

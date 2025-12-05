@@ -19,7 +19,6 @@ class BorrowService {
     const today = new Date();
     const formatDate = (date) => date.toISOString().split("T")[0];
 
-    // Nếu front-end truyền ngày trả thì dùng, nếu không thì mặc định +7 ngày
     let returnDate;
     if (data.ngayTra) {
       returnDate = new Date(data.ngayTra);
@@ -34,10 +33,10 @@ class BorrowService {
       ngayMuon: formatDate(today),
       ngayTra: formatDate(returnDate),
       trangThai: "Chờ duyệt",
-      quantity: data.quantity || 1, // nếu cần số lượng
+      quantity: data.quantity || 1,
     };
 
-    console.log("📤 Gửi phiếu mượn:", payload);
+    // console.log("📤 Gửi phiếu mượn:", payload);
 
     const res = await this.api.post("/", payload);
     return res.data;
@@ -53,7 +52,6 @@ class BorrowService {
     return res.data;
   }
 
-  // 🆕 chỉ lấy phiếu mượn theo độc giả
   async getByReader(readerId) {
     const all = await this.getAllDetails();
     return all.filter((b) => b.docGiaInfo?._id === readerId);

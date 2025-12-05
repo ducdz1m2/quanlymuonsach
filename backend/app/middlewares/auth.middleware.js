@@ -8,7 +8,7 @@ exports.generateToken = (payload) => {
 };
 exports.verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  console.log("🧩 Header nhận được:", authHeader);
+  // console.log("Header nhận được:", authHeader);
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return next(new ApiError(403, "Thiếu token truy cập!"));
@@ -17,11 +17,11 @@ exports.verifyToken = (req, res, next) => {
   const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log("✅ Token decode:", decoded);
+    // console.log("Token decode:", decoded);
     req.user = decoded;
     next();
   } catch (err) {
-    console.log("❌ Token lỗi:", err.message);
+    // console.log("Token lỗi:", err.message);
     return next(new ApiError(403, "Token không hợp lệ hoặc đã hết hạn!"));
   }
 };

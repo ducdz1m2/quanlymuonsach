@@ -13,7 +13,7 @@ const routes = [
     path: "/books",
     name: "books",
     component: Books,
-    meta: { requiresAuth: true }, // chỉ cho người đăng nhập xem
+    meta: { requiresAuth: true },
   },
 
   {
@@ -38,24 +38,20 @@ const router = createRouter({
   routes,
 });
 
-// ✅ Middleware kiểm tra đăng nhập & phân quyền (giữ nguyên logic bạn có)
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("readerToken");
   const readerInfo = JSON.parse(localStorage.getItem("readerInfo") || "{}");
-  const role = readerInfo.chucVu; // nếu có phân quyền
+  const role = readerInfo.chucVu;
   const isAuthenticated = !!token;
 
-  // Chưa đăng nhập mà vào trang yêu cầu login
   if (to.meta.requiresAuth && !isAuthenticated) {
     return next({ name: "reader-login" });
   }
 
-  // Đã đăng nhập mà vào login lại
   if (to.name === "reader-login" && isAuthenticated) {
     return next({ name: "home" });
   }
 
-  // Không đủ quyền
   if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(role)) {
     alert("🚫 Bạn không có quyền truy cập trang này!");
     return next({ name: "home" });

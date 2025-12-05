@@ -186,7 +186,6 @@ export default {
 }
 
 .modal-dialog {
-    /* background: white; */
     border-radius: 12px;
     width: 480px;
     max-height: 85vh;

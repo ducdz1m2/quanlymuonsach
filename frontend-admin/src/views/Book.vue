@@ -3,7 +3,6 @@
         <h1 class="mb-4">📚 Quản lý sách</h1>
 
         <!-- Thanh công cụ -->
-        <!-- Thanh công cụ -->
         <div class="row g-2 mb-3 align-items-center">
             <div class="col-auto">
                 <input

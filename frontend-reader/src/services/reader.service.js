@@ -24,19 +24,16 @@ class ReaderService {
     return res.data;
   }
 
-  // 🟢 Lấy thông tin cá nhân (bằng ID từ localStorage)
   async getProfile(id) {
     const res = await this.api.get(`/${id}`);
     return res.data;
   }
 
-  // 🟢 Cập nhật hồ sơ cá nhân
   async updateProfile(id, data) {
     const res = await this.api.put(`/${id}`, data);
     return res.data;
   }
 
-  // 🟢 Xem số tiền cần thanh toán
   async getPayment(id) {
     const res = await this.api.get(`/${id}/payment`);
     return res.data;
